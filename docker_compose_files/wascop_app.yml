@@ -1,0 +1,59 @@
+version: '3'
+
+networks:
+    base_proxy_network:
+        external: true
+
+services:
+  wascop_app:
+    image: ghcr.io/juan11iguel/wascop_app:latest
+    container_name: wascop_app
+    depends_on:
+      - redis
+      
+    # ports:
+      # - 1313:1313
+    networks:
+      - base_proxy_network
+    labels:
+      # Whatchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+
+      # Traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.wascop_app.rule=( Host(`wascop_app.localhost`) || PathPrefix(`/wascop_app`) )"
+      # - "traefik.http.routers.wascop_app.rule=(Host(`librescadavm`) && PathPrefix(`/wascop_app`))"
+      - "traefik.http.routers.wascop_app.entrypoints=web"
+      - "traefik.http.routers.wascop_app.service=wascop_app"
+      - "traefik.http.services.wascop_app.loadbalancer.server.port=8052"
+      - "traefik.http.routers.wascop_app.middlewares=wascop_app@docker"
+      - "traefik.http.middlewares.wascop_app.stripprefix.prefixes=/wascop_app"
+
+  # Container that everytime detects a change in optimization_V1 folder, it will generate an updated
+  # results.json file and create the new diagrams
+  wascop_results_updater:
+    image: ghcr.io/juan11iguel/wascop_app:latest 
+    container_name: wascop_results_updater
+
+    working_dir: /wascop_app
+
+    command: python results_WASCOP.py --results_folder_path "assets/optimization_V1" --src_diagram_path "assets/optimization_V1/diagrams/WASCOP-Resultados JJAA.svg"
+
+    volumes:
+      - ../assets/wascop_app:/wascop_app/assets/
+      - ../configuration_files:/wascop_app/configuration_files/
+      
+    environment:
+      CONF_FILE: configuration_files/wascop_app.hjson
+
+    labels:
+      # Whatchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  redis:
+    image: redis:alpine
+    networks:
+      - base_proxy_network
+    port: 
+      - 6379:6379
+    

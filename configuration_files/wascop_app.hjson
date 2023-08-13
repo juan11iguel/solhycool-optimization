@@ -1,0 +1,88 @@
+{
+    
+    "port":8052,
+    "REDIS_PORT": 6379,
+    "debug":true,
+    "title": "Solhycool",
+    "nomenclature_diagram": "nomenclature_image.svg",
+    "pathname_prefix": "/",
+    "assets_folder": "simulated_system/" # In docker deployments this won't be used
+    "raw_data_path": "../resultados/optimization_V0"
+    "pareto_results_path": '../resultados/optimization_V1/results.json'
+    // "diagrams_path": "../resultados/optimization_V1/diagrams"
+    "variables":{
+        "R1": {
+            "sensor_id": none,
+            "var_id": "R1",
+            "label": "R1",
+            "description": "Three-way valve position",
+            "unit": "-",
+            "group": "decision_variables"
+        },
+        "R2": {
+            "sensor_id": none,
+            "var_id": "R2",
+            "label": "R2",
+            "description": "Three-way valve position",
+            "unit": "-",
+            "group": "decision_variables"
+        },
+        "qc": {
+            "sensor_id": none,
+            "var_id": "qc",
+            "label": "Qc",
+            "description": "Cooling water flow rate through the surface condenser",
+            "unit": "m³/h",
+            "group": "decision_variables"
+        },
+        "Tdc_out": {
+            "sensor_id": none,
+            "var_id": "Tdc_out",
+            "label": "$T_{dc,out}$",
+            "description": "Dry cooling outlet temperature",
+            "unit": "ºC",
+            "group": "decision_variables"
+        },
+        "Twct_out": {
+            "sensor_id": none,
+            "var_id": "Twct_out",
+            "label": "$T_{wct,out}$",
+            "description": "Wet cooling outlet temperature",
+            "unit": "ºC",
+            "group": "decision_variables"
+        },
+        "Tamb":{
+            "sensor_id": none,
+            "var_id": "Tamb",
+            "label": "$T_{amb}$",
+            "description": "Ambient temperature",
+            "unit": "ºC",
+            "group": "environment_variables",
+            "values": [10, 20, 30, 40]
+        },
+        "HR":{
+            "sensor_id": none,
+            "var_id": "HR",
+            "description": "Ambient temperature",
+            "unit": "ºC",
+            "group": "environment_variables",
+            "values": [20, 40, 70]
+        },
+        "Tv":{
+            "sensor_id": none,
+            "var_id": "Tv",
+            "description": "Vapour temperature",
+            "unit": "ºC",
+            "group": "coooling_requirements",
+            "values": [40, 45, 50]
+        },
+        "Pth":{
+            "sensor_id": none,
+            "var_id": "Pth",
+            "description": "Thermal power",
+            "unit": "kWth",
+            "group": "coooling_requirements",
+            "values": [100, 150, 200]
+        },
+    }
+}

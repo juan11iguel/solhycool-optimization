@@ -1,0 +1,5 @@
+assets/*
+*pycache*
+Dockerfile
+docker_compose_files/*
+configuration_files/*
