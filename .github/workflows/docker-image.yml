@@ -1,0 +1,45 @@
+name: Docker Image CI
+
+on:
+  push:
+    tags:
+        - "v*"
+      # - 'v[0-9]+(\.[0-9]+)*([-\.]\S+)?' # matches tags like v1, v1.2, and v1.2.3-alpha.1 and v1.2.3.alpha.1-build.123+sha.456
+
+jobs:
+
+  build-and-publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag solhycool_optimization:$(date +%s)
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract tag name
+      id: extract_tag
+      run: echo "::set-output name=tag_name::${GITHUB_REF#refs/tags/}"
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/cv-website:${{ steps.extract_tag.outputs.tag_name }}
+   
+    - name: Build and push Docker image with latest tag
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/wascop_optimization:latest
