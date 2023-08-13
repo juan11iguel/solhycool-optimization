@@ -50,7 +50,7 @@ services:
 
     working_dir: /wascop_app
 
-    command: python results_WASCOP.py --results_folder_path "assets/optimization_V1" --src_diagram_path "assets/optimization_V1/diagrams/WASCOP-Resultados JJAA.svg"
+    command: python generate_results.py --results_folder_path "assets/optimization_V1" --src_diagram_path "assets/optimization_V1/diagrams/WASCOP-Resultados JJAA.svg"
 
     volumes:
       - ../assets/wascop_app:/wascop_app/assets/

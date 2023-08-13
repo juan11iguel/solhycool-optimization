@@ -7,6 +7,10 @@ import re
 from lxml import etree
 # import xml.etree.ElementTree as ET
 # from copy import deepcopy
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -20,6 +24,14 @@ parser.add_argument("--src_diagram_path", help="Path to the original svg diagram
 # parser.add_argument("dst_diagrams_path", help="Path to the generated svg diagram")
 
 args = parser.parse_args()
+
+class MyHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if not event.is_directory:
+            logging.info(f"Detected change in {event.src_path}")
+            results = generate_results_file()
+            generate_diagrams(results)
+            logging.info("Functions executed")
 
 def generate_results_file():
     # Join the given folder path with a default filename 'results.json'
@@ -343,5 +355,20 @@ def generate_diagrams(results):
     
     
 if __name__ == '__main__':
+    # Run program indefinitevily, watching for changes in folder and subfolders of results_folder_path, and then trigger functions
+    
+    event_handler = MyHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path=args.results_folder_path, recursive=True)
+    observer.start()
+    logging.info(f"Watching {args.results_folder_path} for changes...")
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    
+    observer.join()
     results = generate_results_file()
     generate_diagrams(results)

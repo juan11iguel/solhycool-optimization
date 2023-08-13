@@ -29,7 +29,7 @@ if os.getenv("CACHE_TYPE", default="local") == "redis":
             config={
                 "CACHE_TYPE": "RedisCache",
                 "CACHE_REDIS_HOST": "redis",
-                "CACHE_REDIS_PORT": os.getenv["REDIS_PORT", 6379],
+                "CACHE_REDIS_PORT": os.getenv("REDIS_PORT", default=6379),
             },
         )
 else:
@@ -254,6 +254,8 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
         pareto_data.append( flatten_dict( results[opcond_id][ptop] ) ) 
     
     pareto_data = pd.DataFrame(pareto_data)
+    # Order pareto data by increasing values of Cw
+    pareto_data = pareto_data.sort_values(by=['Cw'])
     
     
     fig = go.Figure( 

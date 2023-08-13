@@ -4,6 +4,8 @@ LABEL maintainer="Juan Miguel Serrano Rodríguez (jmserrano@psa.es)"
 # Install micro editor
 RUN apt-get update
 RUN apt-get install -y xclip micro
+RUN apt-get install -y nano
+
 # Create project directory
 RUN mkdir -p /wascop_app/
 # Upgrade pip
