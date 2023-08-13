@@ -35,7 +35,7 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/cv-website:${{ steps.extract_tag.outputs.tag_name }}
+        tags: ghcr.io/${{ github.repository_owner }}/wascop_optimization:${{ steps.extract_tag.outputs.tag_name }}
    
     - name: Build and push Docker image with latest tag
       uses: docker/build-push-action@v2
