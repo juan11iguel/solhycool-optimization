@@ -11,9 +11,40 @@ import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
 import random
+from flask_caching import Cache
 
-with open('webpage.hjson', mode="r", encoding='utf-8') as file: config = hjson.loads(file.read())
-with open(config["pareto_results_path"], mode="r", encoding='utf-8') as file: results = json.loads(file.read())
+# with open('webpage.hjson', mode="r", encoding='utf-8') as file: config = hjson.loads(file.read())
+from utilities import globals
+
+""" Globals """
+app = dash.get_app()
+config = globals.config
+
+with open(config["pareto_results_path"], mode="r", encoding='utf-8') as file: 
+    results = json.loads(file.read())
+
+if os.getenv("CACHE_TYPE", default="local") == "redis":
+    cache = Cache(
+            app.server,
+            config={
+                "CACHE_TYPE": "RedisCache",
+                "CACHE_REDIS_HOST": "redis",
+                "CACHE_REDIS_PORT": os.getenv["REDIS_PORT", 6379],
+            },
+        )
+else:
+    cache = Cache(
+        app.server, 
+        config={
+            'CACHE_TYPE': 'filesystem',
+            'CACHE_DIR': config.get("CACHE_DIR", "tmp/"),
+
+            # should be equal to maximum number of users on the app at a single time
+            # higher numbers will store more data in the filesystem / redis cache
+            'CACHE_THRESHOLD': 20
+        }
+    )
+
 
 def create_figure():
     return go.Figure(
@@ -43,7 +74,6 @@ def create_figure():
             ),
         }
     )
-
 
 def create_graph(id):
     return dcc.Graph(figure=create_figure(), config={"displayModeBar": False}, id=id)
@@ -151,7 +181,7 @@ layout = html.Div(
                     dmc.Paper(id='results_container', withBorder=True, mt=30, mb=30, px=40, py=20,
                             children=[
                                 dmc.Text("Click on a point in the pareto front to generate the updated diagram", align="center", my=30, mx=0, weight=700, color='gray'),
-                                dmc.Image(src="/assets/diagrams/WASCOP-Resultados JJAA.svg", alt="wascop-diagram", 
+                                dmc.Image(src="/assets/optimization_V1/diagrams/WASCOP-Resultados JJAA.svg", alt="wascop-diagram", 
                                             caption="Facility diagram with highlighted components and flow paths", width="100%",
                                             withPlaceholder=True, placeholder=[dmc.Loader(color="gray", size="sm")]
                                 )
@@ -190,6 +220,7 @@ dash.register_page(
     State("theme-store", "data"),
     # prevent_initial_call=True,
 )
+@cache.memoize()
 def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     current_theme = current_theme['colorScheme']
@@ -304,6 +335,7 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
     State("theme-store", "data"),
     prevent_initial_call=True,
 )
+@cache.memoize()
 def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
     # changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     if not clickedData: return dash.no_update
@@ -336,7 +368,7 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
         return dash.no_update
     
     diagram_name = opcond_id+'_'+ptop_id+'.svg' if current_theme=='light' else opcond_id+'_'+ptop_id+'_dark.svg'
-    diagram_path = os.path.join('assets', 'diagrams')
+    diagram_path = os.path.join('assets', 'optimization_V1', 'diagrams')
     
     # Check if the dark version is not available and try the light version instead
     if current_theme == 'dark' and diagram_name not in os.listdir(diagram_path):

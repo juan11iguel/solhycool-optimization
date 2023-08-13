@@ -1,13 +1,19 @@
-import dash
-from dash import Dash
 import os
-from flask_caching import Cache
-import hjson
-
+from dash import Dash
 from appshell import create_appshell
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+# parser = argparse.ArgumentParser()
+# parser.add_argument("--config_file", help="Configuration file path", default="webpage.hjson")
+# args = parser.parse_args()
 
 """ Global variables """
-with open('webpage.hjson', mode="r", encoding='utf-8') as file: config = hjson.loads(file.read())
+from utilities import globals
+globals.init()
+
+config = globals.config
 
 scripts = [
     "https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.10.8/dayjs.min.js",
@@ -23,18 +29,9 @@ app = Dash(
     update_title=None,
 )
 
-
 app.layout = create_appshell(config)
 server = app.server
 
-cache = Cache(
-    app.server,
-    config={
-        "CACHE_TYPE": "RedisCache",
-        "CACHE_REDIS_HOST": "redis",
-        "CACHE_REDIS_PORT": config["REDIS_PORT"],
-    },
-)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=config.get("port", 8050))

@@ -6,13 +6,26 @@ networks:
 
 services:
   wascop_app:
-    image: ghcr.io/juan11iguel/wascop_app:latest
+    image: ghcr.io/juan11iguel/solhycool_optimization:latest
     container_name: wascop_app
     depends_on:
       - redis
-      
-    # ports:
-      # - 1313:1313
+
+    command:
+      sh -c "gunicorn --env CONF_FILE=$$CONF_FILE CACHE_TYPE=$$CACHE_TYPE REDIS_PORT=$$REDIS_PORT -b 0.0.0.0:8000 run:server"
+    
+    working_dir: /wascop_app
+    volumes:
+      - ../assets/wascop_app:/wascop_app/assets/
+      - ../configuration_files:/wascop_app/configuration_files/
+    
+    ports:
+      - 8070:8000
+    environment:
+      CONF_FILE: configuration_files/wascop_app.hjson
+      CACHE_TYPE: "redis"
+      REDIS_PORT: 6379
+
     networks:
       - base_proxy_network
     labels:
@@ -32,7 +45,7 @@ services:
   # Container that everytime detects a change in optimization_V1 folder, it will generate an updated
   # results.json file and create the new diagrams
   wascop_results_updater:
-    image: ghcr.io/juan11iguel/wascop_app:latest 
+    image: ghcr.io/juan11iguel/solhycool_optimization:latest 
     container_name: wascop_results_updater
 
     working_dir: /wascop_app
