@@ -255,7 +255,7 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
     
     pareto_data = pd.DataFrame(pareto_data)
     # Order pareto data by increasing values of Cw
-    pareto_data = pareto_data.sort_values(by=['Cw'])
+    pareto_data = pareto_data.sort_values(by=['costs_Cw'])
     
     
     fig = go.Figure( 
