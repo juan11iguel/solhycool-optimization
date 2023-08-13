@@ -10,7 +10,7 @@ RUN mkdir -p /wascop_app/
 RUN pip install --upgrade pip
 
 # Install python dependencies
-COPY requirements_wascop_app.txt /wascop_app/requirements.txt
+COPY requirements.txt /wascop_app/requirements.txt
 RUN pip install -r /wascop_app/requirements.txt
 
 # Copy project files
