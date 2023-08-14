@@ -33,7 +33,7 @@ dash.register_page(
     "an exhaustive experimental campaign in a pilot plant at Plataforma Solar de Almería - CIEMAT, in order "
     "to train and obtain models based on neural networks. The potential of the optimization strategy is "
     "analyzed by simulating different case studies.",
-    image="assets/logo.png"
+    image="assets/logo.png",
 )
 
 with open(config["pareto_results_path"], mode="r", encoding='utf-8') as file: 

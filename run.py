@@ -28,6 +28,7 @@ app = Dash(
     external_scripts=scripts,
     update_title=None,
     url_base_pathname=config.get("url_base_pathname", "/"),
+    assets_folder=os.path.join(os.getcwd(), "assets"),
 )
 
 app.layout = create_appshell(config)
