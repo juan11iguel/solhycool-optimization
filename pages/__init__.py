@@ -1,3 +1,4 @@
+import os
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 from dash import dcc
@@ -7,7 +8,7 @@ def generate_nomenclature(config, style=''):
     
     def load_image(width):
         return dmc.Image(
-            src='assets/nomenclature_image.svg',
+            src=os.join(config["nomenclature_image.svg"], "assets", config.get("nomenclature_diagram", "nomenclature_image.svg")),
             width=width,
             withPlaceholder=True,
             placeholder=[dmc.Loader(color="gray", size="sm")],

@@ -4,7 +4,7 @@
     "CACHE_DIR": "tmp/cache"
     // "debug":true,
     "title": "Solhycool",
-    "nomenclature_diagram": "nomenclature_image.svg",
+    "nomenclature_diagram": "WASCOP-nomenclature.svg",
     // "pathname_prefix": "/",
     // "assets_folder": "simulated_system/" # In docker deployments this won't be used
     "raw_data_path": "assets/optimization_V0"

@@ -10,6 +10,7 @@ from lxml import etree
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import base64
 
 
 # Configure logging
@@ -20,10 +21,24 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--results_folder_path", help="Path to the folder where the results are saved")
 # Source svg diagram
 parser.add_argument("--src_diagram_path", help="Path to the original svg diagram")
+# Generate dark variant
+parser.add_argument("--dark_variant", default=False, help="Generate dark variant", type=bool)
 # Destination svg diagram
 # parser.add_argument("dst_diagrams_path", help="Path to the generated svg diagram")
 
 args = parser.parse_args()
+
+""" Global vaeriables """
+
+nsmap = {
+    'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
+    'cc': 'http://web.resource.org/cc/',
+    'svg': 'http://www.w3.org/2000/svg',
+    'dc': 'http://purl.org/dc/elements/1.1/',
+    'xlink': 'http://www.w3.org/1999/xlink',
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
+    }
 
 class MyHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -137,7 +152,7 @@ def adjust_icon(id, size, tag, value, unit, include_boundary=True, max_size=None
             child.set("template-id", f'icon-{id}')
             
         # Add text
-        if 'g' in child.tag:
+        if child.tag.endswith('g'):
             for child2 in child:
                 if 'text' in child2.tag:
                     if type(value) == str:
@@ -163,18 +178,55 @@ def generate_boundary_circle(id, size_icon, size_boundary, max_value, pos_x, pos
         <g fill="#ECECEC" font-family="Helvetica" font-size="10px">
         <text x="{x+size_boundary/2}" y="{y}">{max_value:.0f}</text></g></g>
     """
-        
-def generate_diagram(diagram, ptop):
+
+def get_level(value, min_value, max_value):
+    span = max_value - min_value
+    if value < min_value + span/3:
+        level = 1
+    elif value < min_value + 2*span/3:
+        level = 2
+    else:
+        level = 3
+    return level
+
+def change_color_text(diagram, text_color, object_id):
+    obj = diagram.xpath(f'//svg:g[@id="cell-{object_id}"]',namespaces=nsmap)
     
-    nsmap = {
-        'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
-        'cc': 'http://web.resource.org/cc/',
-        'svg': 'http://www.w3.org/2000/svg',
-        'dc': 'http://purl.org/dc/elements/1.1/',
-        'xlink': 'http://www.w3.org/1999/xlink',
-        'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-        'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
-        }
+    for child in obj[0]:
+        # print(child.tag)
+        if child.tag.endswith('g'):
+            # In multiline text, the color is set in the group tag
+            child.set('fill', text_color)
+            for child_ in child:
+                # print(child_.tag)
+                if 'text' in child_.tag:
+                    child_.set('fill', text_color)
+                
+    return diagram
+
+def update_image(diagram, image_path, object_id):
+
+    binary_fc       = open(image_path, 'rb').read()  # fc aka file_content
+    base64_utf8_str = base64.b64encode(binary_fc).decode('utf-8')
+
+    ext     = image_path.split('.')[-1]
+    if ext == 'svg': ext = 'svg+xml'
+    dataurl = f'data:image/{ext};base64,{base64_utf8_str}'
+
+    obj = diagram.xpath(f'//svg:g[@id="cell-{object_id}"]',namespaces=nsmap)
+
+    print(obj[0].attrib)
+
+    for child in obj[0]:
+        if 'image' in child.tag:
+            child.set('{http://www.w3.org/1999/xlink}href', dataurl)
+                
+    return diagram
+
+def generate_diagram(diagram, ptop, theme='light'):
+    
+    # Extract assets folder from the original diagram path
+    folder_path = os.path.dirname(args.src_diagram_path) 
     
     # Líneas
     lineas = ["line_c_in", "line_c_out", "line_r2", "line_dc_in", "line_dc_out",
@@ -293,7 +345,7 @@ def generate_diagram(diagram, ptop):
         
         tag = tags[text_box]
         for child in tag[0]:
-            if 'g' in child.tag:
+            if child.tag.endswith('g'):
                 for child2 in child:
                     if 'text' in child2.tag:
                         if unit == 'degree_celsius': unit = '⁰C'
@@ -314,6 +366,77 @@ def generate_diagram(diagram, ptop):
     value = f'{x:.0f} kWhth, {cr["Mv"]:.2f} kg/s, {cr["Tv"]:.0f} ⁰C'
 
     tag = adjust_icon('cooling_req', size, tag, value, unit='', include_boundary=True, max_size=max_size, max_value=xmax)
+    
+    # Costs icons and text values
+    min_value = op_r['Ce_min']
+    max_value = op_r['Ce_max']
+
+    value = ptop['costs']['Ce_wct']
+    level = get_level(value, min_value, max_value)
+    image_path = os.path.join(folder_path, f'electrical_consumption_x{level}.svg')
+    diagram_file = update_image(diagram_file, image_path, object_id='cost_e_wct')
+    tag = tags['cost_e_wct']
+    tag = adjust_icon('Ce_wct', 70, tag, value, 'kWhe', include_boundary=False, max_size=None, max_value=None)
+
+    value = ptop['costs']['Ce_dc']
+    level = get_level(value, min_value, max_value)
+    image_path = os.path.join(folder_path, f'electrical_consumption_x{level}.svg')
+    diagram_file = update_image(diagram_file, image_path, object_id='cost_e_dc')
+    tag = tags['cost_e_dc']
+    tag = adjust_icon('Ce_dc', 70, tag, value, 'kWhe', include_boundary=False, max_size=None, max_value=None)
+
+    min_value = 0
+    max_value = op_r['Cw_max']
+    value = ptop['costs']['Cw_wct']
+    level = get_level(value, min_value, max_value)
+    image_path = os.path.join(folder_path, f'water_consumption_x{level}.svg')
+    diagram_file = update_image(diagram_file, image_path, object_id='cost_w_wct')
+    tag = tags['cost_w_wct']
+    tag = adjust_icon('Cw_wct', 70, tag, value, 'L/h', include_boundary=False, max_size=None, max_value=None)
+    
+    # Change background depending on theme
+    if theme=='dark':
+        
+        # Background image
+        image_path = os.path.join(folder_path, 'background_dark.jpg')
+        diagram_file = update_image(diagram_file, image_path, object_id='background-image')           
+        # Logo gobierno
+        image_path = os.path.join(folder_path, 'micin-uefeder-aei_letras_blancas.svg')
+        diagram_file = update_image(diagram_file, image_path, object_id='logo-gobierno')      
+        # Logo PSA
+        image_path = os.path.join(folder_path, 'logo_psa_letras_blancas_sin_fondo.svg')
+        diagram_file = update_image(diagram_file, image_path, object_id='logo-psa')
+        
+        # Symbols legend box
+        for i in range(28, 57):
+            symbols_obj = diagram_file.xpath(f'//svg:g[@id="cell-juWprjBz31KtaNW54uK3-{i}"]',namespaces=nsmap)
+
+            if len(symbols_obj) == 0:
+                continue
+            
+            # print(symbols_obj[0].attrib)
+
+            for child in symbols_obj[0]:
+                # print(child.tag)
+                
+                # Update background color
+                if 'rect' in child.tag and len(symbols_obj[0]) == 1:
+                    # print('changing background of legend box')
+                    child.set('fill', '#333333')
+                    child.set('stroke', '#ECECEC')
+                    
+                    
+                # Change text color
+                if 'g' in child.tag and not 'rect' in child.tag:
+                    for child_ in child:
+                        if 'text' in child_.tag:
+                            child_.set('fill', '#ECECEC')
+               
+        # Title
+        diagram_file = change_color_text(diagram_file, text_color='#ECECEC', object_id='titulo')
+
+        # Subtitle
+        diagram_file = change_color_text(diagram_file, text_color='#ECECEC', object_id='subtitulo')
         
     return diagram
         
@@ -342,6 +465,10 @@ def generate_diagrams(results):
             
             try:
                 diagram = generate_diagram(diagram, ptop)
+                
+                if args.dark_variant:
+                    diagram_dark = generate_diagram(diagram, ptop, theme='dark')
+                    
             except Exception as e:
                 logging.error(f'Error generating diagram for operation point {ptop_id}.')
                 logging.error(e)
@@ -351,6 +478,12 @@ def generate_diagrams(results):
                 diagram_file.write( etree.tostring(diagram).decode() )
                 
             logging.info(f'Diagram for operation point {ptop_id} generated.')
+            
+            if args.dark_variant:
+                with open(os.path.join(output_folder, ptop_id+'_dark.svg'), 'w') as diagram_file:
+                    diagram_file.write( etree.tostring(diagram_dark).decode() )
+                    
+                logging.info(f'Dark variant of diagram for operation point {ptop_id} generated.')
         
     
     
