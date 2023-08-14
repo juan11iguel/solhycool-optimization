@@ -374,14 +374,14 @@ def generate_diagram(diagram, ptop, theme='light'):
     value = ptop['costs']['Ce_wct']
     level = get_level(value, min_value, max_value)
     image_path = os.path.join(folder_path, f'electrical_consumption_x{level}.svg')
-    diagram_file = update_image(diagram_file, image_path, object_id='cost_e_wct')
+    diagram = update_image(diagram, image_path, object_id='cost_e_wct')
     tag = tags['cost_e_wct']
     tag = adjust_icon('Ce_wct', 70, tag, value, 'kWhe', include_boundary=False, max_size=None, max_value=None)
 
     value = ptop['costs']['Ce_dc']
     level = get_level(value, min_value, max_value)
     image_path = os.path.join(folder_path, f'electrical_consumption_x{level}.svg')
-    diagram_file = update_image(diagram_file, image_path, object_id='cost_e_dc')
+    diagram = update_image(diagram, image_path, object_id='cost_e_dc')
     tag = tags['cost_e_dc']
     tag = adjust_icon('Ce_dc', 70, tag, value, 'kWhe', include_boundary=False, max_size=None, max_value=None)
 
@@ -390,7 +390,7 @@ def generate_diagram(diagram, ptop, theme='light'):
     value = ptop['costs']['Cw_wct']
     level = get_level(value, min_value, max_value)
     image_path = os.path.join(folder_path, f'water_consumption_x{level}.svg')
-    diagram_file = update_image(diagram_file, image_path, object_id='cost_w_wct')
+    diagram = update_image(diagram, image_path, object_id='cost_w_wct')
     tag = tags['cost_w_wct']
     tag = adjust_icon('Cw_wct', 70, tag, value, 'L/h', include_boundary=False, max_size=None, max_value=None)
     
@@ -399,17 +399,17 @@ def generate_diagram(diagram, ptop, theme='light'):
         
         # Background image
         image_path = os.path.join(folder_path, 'background_dark.jpg')
-        diagram_file = update_image(diagram_file, image_path, object_id='background-image')           
+        diagram = update_image(diagram, image_path, object_id='background-image')           
         # Logo gobierno
         image_path = os.path.join(folder_path, 'micin-uefeder-aei_letras_blancas.svg')
-        diagram_file = update_image(diagram_file, image_path, object_id='logo-gobierno')      
+        diagram = update_image(diagram, image_path, object_id='logo-gobierno')      
         # Logo PSA
         image_path = os.path.join(folder_path, 'logo_psa_letras_blancas_sin_fondo.svg')
-        diagram_file = update_image(diagram_file, image_path, object_id='logo-psa')
+        diagram = update_image(diagram, image_path, object_id='logo-psa')
         
         # Symbols legend box
         for i in range(28, 57):
-            symbols_obj = diagram_file.xpath(f'//svg:g[@id="cell-juWprjBz31KtaNW54uK3-{i}"]',namespaces=nsmap)
+            symbols_obj = diagram.xpath(f'//svg:g[@id="cell-juWprjBz31KtaNW54uK3-{i}"]',namespaces=nsmap)
 
             if len(symbols_obj) == 0:
                 continue
@@ -433,10 +433,10 @@ def generate_diagram(diagram, ptop, theme='light'):
                             child_.set('fill', '#ECECEC')
                
         # Title
-        diagram_file = change_color_text(diagram_file, text_color='#ECECEC', object_id='titulo')
+        diagram = change_color_text(diagram, text_color='#ECECEC', object_id='titulo')
 
         # Subtitle
-        diagram_file = change_color_text(diagram_file, text_color='#ECECEC', object_id='subtitulo')
+        diagram = change_color_text(diagram, text_color='#ECECEC', object_id='subtitulo')
         
     return diagram
         
