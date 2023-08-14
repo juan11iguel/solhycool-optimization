@@ -27,6 +27,7 @@ app = Dash(
     use_pages=True,
     external_scripts=scripts,
     update_title=None,
+    url_base_pathname=config.get("url_base_pathname", "/"),
 )
 
 app.layout = create_appshell(config)

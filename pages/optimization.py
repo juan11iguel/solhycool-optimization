@@ -20,6 +20,22 @@ from utilities import globals
 app = dash.get_app()
 config = globals.config
 
+dash.register_page(
+    __name__,
+    path="/optimization",
+    title="solhycool - Optimization",
+    description="One of the challenges related to solar thermal power plants is the high water consumption, "
+    "which mainly comes from the cooling process of the power cycle. Combined cooling systems "
+    "are presented as a potential solution to reduce water consumption, while also avoiding a high penalty "
+    "due to efficiency loss in the power block. This paper analyzes the application of optimization strategies "
+    "for a combined cooling system in order to evaluate the most suitable operating configuration according "
+    "to different operating and environmental criteria. For this purpose, it has been necessary to carry out "
+    "an exhaustive experimental campaign in a pilot plant at Plataforma Solar de Almería - CIEMAT, in order "
+    "to train and obtain models based on neural networks. The potential of the optimization strategy is "
+    "analyzed by simulating different case studies.",
+    image="assets/logo.png"
+)
+
 with open(config["pareto_results_path"], mode="r", encoding='utf-8') as file: 
     results = json.loads(file.read())
 
@@ -193,21 +209,6 @@ layout = html.Div(
     ]
 )
 
-dash.register_page(
-    __name__,
-    "/optimization",
-    title="solhycool - Optimization",
-    description="One of the challenges related to solar thermal power plants is the high water consumption, "
-    "which mainly comes from the cooling process of the power cycle. Combined cooling systems "
-    "are presented as a potential solution to reduce water consumption, while also avoiding a high penalty "
-    "due to efficiency loss in the power block. This paper analyzes the application of optimization strategies "
-    "for a combined cooling system in order to evaluate the most suitable operating configuration according "
-    "to different operating and environmental criteria. For this purpose, it has been necessary to carry out "
-    "an exhaustive experimental campaign in a pilot plant at Plataforma Solar de Almería - CIEMAT, in order "
-    "to train and obtain models based on neural networks. The potential of the optimization strategy is "
-    "analyzed by simulating different case studies.",
-)
-
 # Cache this callback
 # Callback to update results visualization
 @callback(
@@ -310,7 +311,7 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
     
     # Add pareto front with tooltip, rounded filled markers and alpha 100%
     fig.add_trace(go.Scatter(x=pareto_data['costs_Cw'], y=pareto_data['costs_Ce'], name='Pareto front', 
-                             hovertemplate=hover_text, customdata=custom_data,
+                             hovertemplate=hover_text, customdata=custom_data, mode='lines+markers',
                              marker=dict(
                                 symbol='circle',  # Custom symbol
                                 opacity=1,  # Alpha (transparency)

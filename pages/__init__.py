@@ -8,7 +8,7 @@ def generate_nomenclature(config, style=''):
     
     def load_image(width):
         return dmc.Image(
-            src=os.join(config["nomenclature_image.svg"], "assets", config.get("nomenclature_diagram", "nomenclature_image.svg")),
+            src=os.path.join("assets", config.get("nomenclature_diagram", "nomenclature_image.svg")),
             width=width,
             withPlaceholder=True,
             placeholder=[dmc.Loader(color="gray", size="sm")],
