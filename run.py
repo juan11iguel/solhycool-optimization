@@ -31,7 +31,9 @@ app = Dash(
     # requests_pathname_prefix=
     # routes_pathname_prefix=
     assets_folder=os.path.join(os.getcwd(), "assets"),
-)
+    external_stylesheets=["https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.2/css/bootstrap.min.css",
+                          "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"]
+)   
 
 app.layout = create_appshell(config)
 server = app.server

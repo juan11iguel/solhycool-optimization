@@ -1,4 +1,5 @@
 from collections import defaultdict
+import datetime
 
 import dash_mantine_components as dmc
 import dash
@@ -58,6 +59,7 @@ def create_header_link(icon, href, size=22, color="indigo"):
             DashIconify(
                 icon=icon,
                 width=size,
+                color=color
             ),
             variant="outline",
             radius=30,
@@ -189,12 +191,12 @@ def create_header():
                                                     # Source code
                                                     create_header_link(
                                                         "radix-icons:github-logo",
-                                                        "https://github.com/juan11iguel/combined-cooling-optimization",
+                                                        "https://github.com/juan11iguel/solhycool_optimization",
                                                     ),
                                                     
                                                     # Portainer
                                                     create_header_link(
-                                                        "bi:discord", "https://discord.gg/KuJkh4Pyq5"
+                                                        "line-md:sunny-outline-twotone-loop", "http://www.psa.es/es/index.php", color="#FCC419"
                                                     ),
                                                 ],
                                             ),
@@ -287,10 +289,9 @@ def create_footer():
                         html.Div(className="kilimanjaro_part m-top-15", children=[
                             html.H5("Social Links"),
                             html.Ul(className="kilimanjaro_social_links", children=[
-                                html.Li(html.A(html.I(className="fa fa-facebook"), " Facebook")),
                                 html.Li(html.A(html.I(className="fa fa-twitter"), " Twitter")),
                                 html.Li(html.A(html.I(className="fa fa-pinterest"), " Pinterest")),
-                                html.Li(html.A(html.I(className="fa fa-youtube"), " YouTube")),
+                                html.Li(html.A(html.I(className="fa fa-youtube"), "YouTube")),
                                 html.Li(html.A(html.I(className="fa fa-linkedin"), " Linkedin")),
                             ])
                         ]),
@@ -370,11 +371,11 @@ def create_footer():
                     html.Div(className="kilimanjaro_part", children=[
                         html.H5("Contact"),
                         html.Div(className="kilimanjaro_single_contact_info", children=[
-                            html.H5("Patricia Palenzuela Ardila:"),
+                            html.H6("Patricia Palenzuela Ardila"),
                             html.P(html.A("ppalenzuela@psa.es", href="mailto:ppalenzuela@psa.es"))
                         ]),
                         html.Div(className="kilimanjaro_single_contact_info", children=[
-                            html.H5("Lidia Roca Sobrino:"),
+                            html.H6("Lidia Roca Sobrino"),
                             html.P(html.A("lroca@psa.es", href="mailto:lroca@psa.es"))
                         ])
                     ])
@@ -389,8 +390,8 @@ def create_footer():
                 html.Div(className="row", children=[
                     html.Div(className="col-12", children=[
                         html.P([
-                            "© All Rights Reserved by &nbsp;",
-                            html.A("Juan Miguel Serrano.", href="#"),
+                            f"© SOLHYCOOL {datetime.date.today().year} All Rights Reserved by ",
+                            html.A("Juan Miguel Serrano.", href="https://github.com/juan11iguel"),
                             html.I(className="fa fa-love")
                         ])
                     ])
