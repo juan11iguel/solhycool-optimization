@@ -2,8 +2,17 @@ version: "3"
 services:
   watchtower:
     image: containrrr/watchtower
-    container-name: watchtower
+    container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /root/.docker/config.json:/config.json
-    command: --interval 30 --label-enable true
+      # - .docker/config.json:/config.json
+    command: --interval 30
+
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_INTERVAL=30
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      # - DOCKER_CONFIG= /config
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"

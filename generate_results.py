@@ -267,12 +267,12 @@ def generate_diagram(diagram, ptop, theme='light'):
             child.set("stroke-width", str(line_width))
             
     tag = tags["line_r2"]
-    width_line_r2 = line_width*dv["R2"]
+    width_line_r2 = line_width*(1-dv["R2"])
     # Línea y flecha
     for child in tag[0]:
         child.set("stroke-width", str(width_line_r2))
 
-    width_line_dc = line_width*(1-dv["R2"])
+    width_line_dc = line_width*(dv["R2"])
     for line in ["line_dc_in", "line_dc_out"]:
         tag = tags[line]
         # Línea y flecha
@@ -280,13 +280,13 @@ def generate_diagram(diagram, ptop, theme='light'):
             child.set("stroke-width", str(width_line_dc))
 
     tag = tags["line_r1_out1"]
-    width_r1_out2 = width_line_dc*dv["R1"]
+    width_r1_out2 = width_line_dc*(1-dv["R1"])
     # Línea y flecha
     for child in tag[0]:
         child.set("stroke-width", str(width_r1_out2))        
             
     tag = tags["line_r1_out2"]
-    width_line_r1_out2 = width_line_dc*(1-dv["R1"])
+    width_line_r1_out2 = width_line_dc*(dv["R1"])
     # Línea y flecha
     for child in tag[0]:
         child.set("stroke-width", str(width_line_r1_out2))    

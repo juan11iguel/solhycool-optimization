@@ -22,8 +22,8 @@ services:
       - ../assets/wascop_app:/wascop_app/assets/
       - ../configuration_files:/wascop_app/configuration_files/
     
-    ports:
-      - 8070:8000
+    # ports:
+    #   - 8070:8000
     environment:
       CONF_FILE: configuration_files/wascop_app.hjson
       CACHE_TYPE: "redis"
