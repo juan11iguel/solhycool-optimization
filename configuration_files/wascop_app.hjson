@@ -1,9 +1,9 @@
 {
     
     "port":8052,
-    "CACHE_DIR": "tmp/cache"
+    // "CACHE_DIR": "tmp/cache"
     // "debug":true,
-    "title": "Solhycool",
+    "title": "SOLhycool",
     "nomenclature_diagram": "WASCOP-nomenclature.svg",
     "url_base_pathname": "/solhycool/",
     // "pathname_prefix": "/",
@@ -11,6 +11,7 @@
     "raw_data_path": "assets/optimization_V0"
     "pareto_results_path": 'assets/optimization_V1/results.json'
     // "diagrams_path": "../resultados/optimization_V1/diagrams"
+    
     "variables":{
         "R1": {
             "sensor_id": none,
