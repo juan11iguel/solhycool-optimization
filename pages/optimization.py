@@ -197,7 +197,7 @@ layout = html.Div(
                     dmc.Paper(id='results_container', withBorder=True, mt=30, mb=30, px=40, py=20,
                             children=[
                                 dmc.Text("Click on a point in the pareto front to generate the updated diagram", align="center", my=30, mx=0, weight=700, color='gray'),
-                                dmc.Image(src="/assets/optimization_V1/diagrams/WASCOP-Resultados JJAA.svg", alt="wascop-diagram", 
+                                dmc.Image(src="/assets/optimization_V1/diagrams/aux/WASCOP-Resultados JJAA.svg", alt="wascop-diagram", 
                                             caption="Facility diagram with highlighted components and flow paths", width="100%",
                                             withPlaceholder=True, placeholder=[dmc.Loader(color="gray", size="sm")]
                                 )

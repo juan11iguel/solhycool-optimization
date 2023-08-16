@@ -265,6 +265,142 @@ def create_header():
     )
 
 
+def create_footer():
+    return dmc.Footer(
+        height="100",
+        # fixed=True,
+        px=0,
+        my=0,
+        children=[
+            html.Footer(className="kilimanjaro_area", children=[
+        # Top Footer Area Start
+        html.Div(className="foo_top_header_one section_padding_100_70", children=[
+            html.Div(className="container", children=[
+                html.Div(className="row", children=[
+                    
+                    html.Div(className="col-12 col-md-6 col-lg-3", children=[
+                        html.Div(className="kilimanjaro_part", children=[
+                            html.H5("About Us"),
+                            html.P("SOLhycool is a Spanish research project aimed at advancing hybrid cooling technology for large-scale solar thermal applications. Our focus is on improving water management and efficiency in integrated solar thermal applications, making this technology both technically feasible and economically viable."),
+                            html.P("Our objectives include identifying components through experiments at Plataforma Solar de Almería, creating data-driven models based on these experiments, implementing effective control systems, and optimizing electricity and water consumption strategies.")
+                        ]),
+                        html.Div(className="kilimanjaro_part m-top-15", children=[
+                            html.H5("Social Links"),
+                            html.Ul(className="kilimanjaro_social_links", children=[
+                                html.Li(html.A(html.I(className="fa fa-facebook"), " Facebook")),
+                                html.Li(html.A(html.I(className="fa fa-twitter"), " Twitter")),
+                                html.Li(html.A(html.I(className="fa fa-pinterest"), " Pinterest")),
+                                html.Li(html.A(html.I(className="fa fa-youtube"), " YouTube")),
+                                html.Li(html.A(html.I(className="fa fa-linkedin"), " Linkedin")),
+                            ])
+                        ]),
+                    ]),
+                    html.Div(className="col-12 col-md-6 col-lg-3", children=[
+                        html.Div(className="kilimanjaro_part", children=[
+                            html.H5("Keywords"),
+                            html.Ul(className="kilimanjaro_widget", children=[
+                                html.Li(html.A("solar energy", href="#")),
+                                html.Li(html.A("solar thermal applications", href="#")),
+                                html.Li(html.A("hybrid cooling", href="#")),
+                                html.Li(html.A("process control", href="#")),
+                                html.Li(html.A("optimization", href="#")),
+                                html.Li(html.A("modeling", href="#")),
+                                html.Li(html.A("concentrating solar power", href="#")),
+                                html.Li(html.A("simulation", href="#")),
+                                html.Li(html.A("experimental assessment", href="#")),
+                            ])
+                        ]),
+                        html.Div(className="kilimanjaro_part m-top-15", children=[
+                            html.H5("Links"),
+                            html.Ul(className="kilimanjaro_links", children=[
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right")," PSA webpage"], href="#")),
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right")," Project's webpage"], href="#")),
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right")," Help & Support"], href="#")),
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right")," Privacy Policy"], href="#")),
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right")," Community & Forum"], href="#")),
+                            ])
+                        ]),
+                        
+                    ]),
+                    
+                    html.Div(className="col-12 col-md-6 col-lg-3", children=[
+                        html.Div(className="kilimanjaro_part", children=[
+                            html.H5("Participant entities"),
+                            html.Ul(className="kilimanjaro_links", children=[
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right"),
+                                    " Unviersidad de Almería"
+                                ], href="#")),
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right"),
+                                    " Plataforma Solar de Almería - CIEMAT"
+                                ], href="#")),
+                                html.Li(html.A([
+                                    html.I(className="fa fa-angle-right"),
+                                    " University of Huddersfield"
+                                ], href="#")),
+                            ])
+                        ]),
+                        
+                    html.Div(className="kilimanjaro_part m-top-15", children=[
+                        html.H5("Collaborating entities"),
+                        html.Ul(className="kilimanjaro_links", children=[
+                            html.Li(html.A([
+                                html.I(className="fa fa-angle-right"),
+                                " Unviersidad Miguel Hernández"
+                            ], href="#")),
+                            html.Li(html.A([
+                                html.I(className="fa fa-angle-right"),
+                                " Cranfield University"
+                            ], href="#")),
+                            html.Li(html.A([
+                                html.I(className="fa fa-angle-right"),
+                                " University of Huddersfield"
+                            ], href="#")),
+                        ])
+                    ])
+                ]),
+                    
+                html.Div(className="col-12 col-md-6 col-lg-3", children=[
+                    html.Div(className="kilimanjaro_part", children=[
+                        html.H5("Contact"),
+                        html.Div(className="kilimanjaro_single_contact_info", children=[
+                            html.H5("Patricia Palenzuela Ardila:"),
+                            html.P(html.A("ppalenzuela@psa.es", href="mailto:ppalenzuela@psa.es"))
+                        ]),
+                        html.Div(className="kilimanjaro_single_contact_info", children=[
+                            html.H5("Lidia Roca Sobrino:"),
+                            html.P(html.A("lroca@psa.es", href="mailto:lroca@psa.es"))
+                        ])
+                    ])
+                ])
+                    
+                ])  
+            ])
+        ]),
+        # Footer Bottom Area Start
+        html.Div(className="kilimanjaro_bottom_header_one section_padding_50 text-center", children=[
+            html.Div(className="container", children=[
+                html.Div(className="row", children=[
+                    html.Div(className="col-12", children=[
+                        html.P([
+                            "© All Rights Reserved by &nbsp;",
+                            html.A("Juan Miguel Serrano.", href="#"),
+                            html.I(className="fa fa-love")
+                        ])
+                    ])
+                ])
+            ])
+        ])
+    ])
+        ]
+    )
+
 def create_side_nav_content(nav_data):
     main_links = dmc.Stack(
         spacing="sm",
@@ -436,6 +572,8 @@ def create_appshell(config):
                             ],
                             id="wrapper",
                         ),
+                        
+                        create_footer(),
                     ]
                 ),
             ],

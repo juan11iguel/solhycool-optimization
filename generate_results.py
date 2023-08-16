@@ -215,7 +215,7 @@ def update_image(diagram, image_path, object_id):
 
     obj = diagram.xpath(f'//svg:g[@id="cell-{object_id}"]',namespaces=nsmap)
 
-    print(obj[0].attrib)
+    # print(obj[0].attrib)
 
     for child in obj[0]:
         if 'image' in child.tag:

@@ -28,6 +28,8 @@ app = Dash(
     external_scripts=scripts,
     update_title=None,
     url_base_pathname=config.get("url_base_pathname", "/"),
+    # requests_pathname_prefix=
+    # routes_pathname_prefix=
     assets_folder=os.path.join(os.getcwd(), "assets"),
 )
 

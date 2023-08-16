@@ -12,7 +12,10 @@ services:
       - redis
 
     command:
-      sh -c "gunicorn --env CONF_FILE=$$CONF_FILE CACHE_TYPE=$$CACHE_TYPE REDIS_PORT=$$REDIS_PORT -b 0.0.0.0:8000 run:server"
+      # Run a command that will make the container stay alive
+      # sh -c "while true; do sleep 10; done;"
+      # sh -c "gunicorn --env SCRIPT_NAME=/solhycool --env CONF_FILE=$$CONF_FILE --env CACHE_TYPE=$$CACHE_TYPE --env REDIS_PORT=$$REDIS_PORT -b 0.0.0.0:8000 run:server"
+      sh -c "gunicorn --env CONF_FILE=$$CONF_FILE --env CACHE_TYPE=$$CACHE_TYPE --env REDIS_PORT=$$REDIS_PORT -b 0.0.0.0:8000 run:server"
     
     working_dir: /wascop_app
     volumes:
@@ -34,13 +37,11 @@ services:
 
       # Traefik
       - "traefik.enable=true"
-      - "traefik.http.routers.wascop_app.rule=( Host(`wascop_app.localhost`) || PathPrefix(`/wascop_app`) )"
-      # - "traefik.http.routers.wascop_app.rule=(Host(`librescadavm`) && PathPrefix(`/wascop_app`))"
-      - "traefik.http.routers.wascop_app.entrypoints=web"
-      - "traefik.http.routers.wascop_app.service=wascop_app"
-      - "traefik.http.services.wascop_app.loadbalancer.server.port=8052"
-      - "traefik.http.routers.wascop_app.middlewares=wascop_app@docker"
-      - "traefik.http.middlewares.wascop_app.stripprefix.prefixes=/wascop_app"
+      - "traefik.http.routers.wascop_app.rule=PathPrefix(`/solhycool`)"
+      # - "traefik.http.routers.wascop_app.tls.certresolver=myresolver"
+      - "traefik.http.services.wascop_app.loadbalancer.server.port=8000"
+      # - "traefik.http.routers.wascop_app.middlewares=wascop_app@docker"
+      # - "traefik.http.middlewares.wascop_app.stripprefix.prefixes=/solhycool"
 
   # Container that everytime detects a change in optimization_V1 folder, it will generate an updated
   # results.json file and create the new diagrams
@@ -50,7 +51,7 @@ services:
 
     working_dir: /wascop_app
 
-    command: python generate_results.py --results_folder_path "assets/optimization_V1" --src_diagram_path "assets/optimization_V1/diagrams/WASCOP-Resultados JJAA.svg"
+    command: python generate_results.py --results_folder_path "assets/optimization_V1" --src_diagram_path "assets/optimization_V1/diagrams/aux/WASCOP-Resultados JJAA.svg" --dark_variant true
 
     volumes:
       - ../assets/wascop_app:/wascop_app/assets/
@@ -65,8 +66,9 @@ services:
 
   redis:
     image: redis:alpine
+    container_name: redis
     networks:
       - base_proxy_network
-    port: 
-      - 6379:6379
+    # ports: 
+    #   - 6379:6379
     

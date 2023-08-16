@@ -38,14 +38,18 @@ services:
     labels:
       - "traefik.http.routers.traefik.service=api@internal"
 
-      # Traefik dashboard
-      - "traefik.http.routers.traefik.rule=(PathPrefix(`/traefik`) || PathPrefix(`/api`))" # Put in your domain
-      - "traefik.http.routers.traefik.entrypoints=web"
-      - "traefik.http.routers.traefik.service=traefik"
+      # Traefik dashboard as subpath 
+      # I don't think it's possible at the moment. See https://github.com/containous/traefik/issues/5374
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=PathPrefix(`/traefik`)"
+      # - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.middlewares=traefik@docker"
+      - "traefik.http.middlewares.traefik.stripprefix.prefixes=/traefik"
+
+
       # - "traefik.http.routers.traefik.middlewares=traefik-auth"
       # - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$8EVjn/nj$$GiLUZqcbueTFeD23SuB6x0" # username: admin, password: admin
-      - "traefik.http.routers.traefik.middlewares=strip"
-      - "traefik.http.middlewares.strip.stripprefix.prefixes=/traefik"
 
   whoami:
     image: "traefik/whoami"
@@ -53,69 +57,4 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=( Host(`whoami.localhost`) || PathPrefix(`/whoami`) )"
-      - "traefik.http.routers.whoami.entrypoints=web"
       # - "traefik.http.routers.whoami.tls.certresolver=myresolver"
-  # traefik:
-  #   container_name: "reverse_proxy"
-  #   image: traefik:v2.10
-  #   command: 
-  #     - "--api=true"
-  #     - "--api.dashboard=true"
-  #     - "--providers.docker.exposedByDefault=false"
-  #     - "--providers.docker.network=base_proxy_network" 
-  #     - "--api.debug=true"
-  #     - "--api.insecure=true"
-  #     - "--log.Level=INFO"
-  #     - "--api.logLevel=DEBUG"
-  #     - "--entrypoints.web.address=:80"
-  #     - "--entrypoints.websecure.address=:443"
-  #     - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge=true"
-  #     - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge.entrypoint=web"
-  #     - "--certificatesresolvers.letsencryptresolver.acme.email=juan11iguel@gmail.com"
-  #     - "--certificatesresolvers.letsencryptresolver.acme.storage=/letsencrypt/acme.json"
-  #   ports:
-  #     - "50080:80" # The HTTP port
-  #     - "50443:443"
-  #     - "8080:8080" # The Web UI (enabled by --api.insecure=true)
-  #   volumes:
-  #     - acme-certs:/letsencrypt
-  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
-  #   networks:
-  #     - proxy_network
-  #   restart: unless-stopped
-  #   deploy:
-  #     placement:
-  #       constraints:
-  #         - node.role == manager
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.services.api@internal.loadbalancer.server.port=8080" # Required in swarms, https://doc.traefik.io/traefik/v2.0/routing/providers/docker/#services
-  #     # HTTP Catchall for redirecting HTTP -> HTTPS
-  #     - "traefik.http.routers.http-catchall.rule=(PathPrefix(`/`) || (Host(`juan11iguel.com`) && PathPrefix(`/`))"
-  #     - "traefik.http.routers.http-catchall.entrypoints=web"
-  #     - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-  #     - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-  #     # Traefik dashboard
-  #     - "traefik.http.routers.traefik.rule= (Host(`juan11iguel.com`) && PathPrefix(`/traefik`) || PathPrefix(`/api`))" # Put in your domain
-  #     # - "traefik.http.routers.traefik.rule=(Host(`external.psa.es`) || Host(`www.external.psa.es`)) && (PathPrefix(`/traefik`) || PathPrefix(`/api`))" # Put in your domain
-  #     - "traefik.http.routers.traefik.entrypoints=websecure"
-  #     - "traefik.http.routers.traefik.tls.certresolver=letsencryptresolver"
-  #     - "traefik.http.routers.traefik.service=api@internal"
-  #     # - "traefik.http.routers.traefik.middlewares=traefik-auth"
-  #     # - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$8EVjn/nj$$GiLUZqcbueTFeD23SuB6x0" # username: admin, password: admin
-  #     - "traefik.http.routers.traefik.middlewares=strip"
-  #     - "traefik.http.middlewares.strip.stripprefix.prefixes=/traefik"
-      #
-  # whoami:
-    # container_name: "test_container"
-    # # A container that exposes an API to show its IP address
-    # image: traefik/whoami
-    # networks:
-      # - proxy_network
-    # labels:
-      # - "traefik.enable=true"
-      # - "traefik.http.routers.whoami.rule=(PathPrefix(`/test`)) || (Host(`juan11iguel.com`) && PathPrefix(`/test`))"
-      # # - "traefik.http.routers.whoami.rule=(Host(`localhost`) && PathPrefix(`/test`))"
-      # - "traefik.http.routers.whoami.entrypoints=websecure"
-      # - "traefik.http.routers.whoami.tls.certresolver=letsencryptresolver"
-      # 
