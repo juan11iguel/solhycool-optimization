@@ -27,7 +27,19 @@ docker compose -f docker_compose_files/watchtower.yml --project-name base up -d
 - When new results are made available, new diagrams are generated and the results dicitionary is updated with the new data making it available at runtime in the app.
 - Cached outputs via a redis server.
 
-## Create a new image
+## Pending
+
+- In mobile version, header should not be permanent (takes too much space in lanscape mode)
+- In mobile version, remove icons from evaluate and export buttons.
+- When pareto optimization is not available, just show the cloud of points and display the identified minimums.
+- Generate a pdf report when some operation conditions are selected.
+- When a point is selected, generate some plots to evaluate the contributors to the electrical consumption, and compare the operation point with some extremes (only DC or only WCT).
+- In mobile version, remove padding and margins from paper components to better take advantage of the available space.
+- Add telemetry just to gather some basic anonymous information (number of visitors, etc)
+
+## How to
+
+### Create a new image
 
 In order to trigger an image build:
 
@@ -47,7 +59,7 @@ In order to trigger an image build:
 ```
 
 
-## Running the application locally
+### Running the application locally
 
 Set up the environment installing the dependencies from `requirerments.txt`
 
@@ -62,7 +74,7 @@ Set up the environment installing the dependencies from `requirerments.txt`
     gunicorn --env CONF_FILE=$CONF_FILE -b 0.0.0.0:8000 app:server
 ```
 
-### Warning
+## Warning
 
 This is a work in progress made public for a particular implementation of the results visualization of an optimization strategy. At the current conditions it is not expected to be used by any users, but the source code is freely available to check and a running implementation is avaialable at [external.psa.es/solhycool/optimization](https://external.psa.es/solhycool/optimization).
 
