@@ -19,6 +19,9 @@ docker compose -f docker_compose_files/traefik.yml --project-name base up -d
 docker compose -f docker_compose_files/watchtower.yml --project-name base up -d
 ```
 3. Run the web app and the dynamic results updater to make new results available (pareto front and diagrams) as soon as new data is copied to the assets folder.
+```bash
+docker compose -f docker_compose_files/wascop_app.yml --project-name solhycool up -d
+```
 
 ## Features
 
@@ -61,14 +64,14 @@ In order to trigger an image build:
 
 ### Running the application locally
 
-Set up the environment installing the dependencies from `requirerments.txt`
+1. Set up the environment installing the dependencies from `requirerments.txt`
 
-1. Set the required environment variables
+2. Set the required environment variables
 
 ```bash
     export CONF_FILE= "..."
 ```
-2. Run the app
+3. Run the app
 
 ```bash
     gunicorn --env CONF_FILE=$CONF_FILE -b 0.0.0.0:8000 app:server
