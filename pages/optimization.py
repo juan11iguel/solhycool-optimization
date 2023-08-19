@@ -10,6 +10,7 @@ import numpy as np
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import random
 from flask_caching import Cache
 
@@ -113,6 +114,28 @@ def flatten_dict(d, parent_key='', sep='_'):
             items.append((new_key, v))
     return dict(items)
 
+def generate_tooltip_data(pr, cv):
+    custom_data = np.stack((
+        # Decision variables
+        pr['decision_variables_R1'].values, 
+        pr['decision_variables_R2'].values,
+        pr['decision_variables_qc'].values,
+        pr['decision_variables_Tdc_out'].values,   
+        pr['decision_variables_Twct_out'].values,   
+    ), axis=-1)
+    
+    # Build hover text
+    hover_text = f"""
+    <b>Decision variables</b><br>
+    - {cv['R1']['label']}: %{{customdata[0]:.2f}} {cv['R1']['unit']}<br>
+    - {cv['R2']['label']}: %{{customdata[1]:.2f}} {cv['R2']['unit']}<br>
+    - {cv['qc']['label']}: %{{customdata[2]:.1f}} {cv['qc']['unit']}<br>
+    - {cv['Tdc_out']['label']}: %{{customdata[3]:.1f}} {cv['Tdc_out']['unit']}<br>
+    - {cv['Twct_out']['label']}: %{{customdata[4]:.1f}} {cv['Twct_out']['unit']}<br>
+    """
+    
+    return custom_data, hover_text
+
 
 layout = html.Div(
     [
@@ -197,7 +220,7 @@ layout = html.Div(
                     dmc.Paper(id='results_container', withBorder=True, mt=30, mb=30, px=40, py=20,
                             children=[
                                 dmc.Text("Click on a point in the pareto front to generate the updated diagram", align="center", my=30, mx=0, weight=700, color='gray'),
-                                dmc.Image(src="/assets/optimization_V1/diagrams/aux/WASCOP-Resultados JJAA.svg", alt="wascop-diagram", 
+                                dmc.Image(src="/assets/WASCOP-Resultados JJAA.svg", alt="wascop-diagram", 
                                             caption="Facility diagram with highlighted components and flow paths", width="100%",
                                             withPlaceholder=True, placeholder=[dmc.Loader(color="gray", size="sm")]
                                 )
@@ -266,8 +289,8 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
                     'title': f"Pareto Front for Tv={Tv}ºC and Pth={Pth}kWth, Tamb={Tamb}ºC and HR={HR}%",
                     'legend':{
                         'orientation':'h',  # Horizontal orientation
-                        'x':0.4,  # X position of the legend (0.5 centers it)
-                        'y':1,  # Y position of the legend (1.1 places it above the plot)
+                        # 'x':0.4,  # X position of the legend (0.5 centers it)
+                        # 'y':1,  # Y position of the legend (1.1 places it above the plot)
                      },
                     'template': 'ggplot2' if current_theme=='light' else 'plotly_dark'
                 }
@@ -286,28 +309,8 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
             )    
         ), 
     )
-
-    pr = pareto_data
-    cv = config["variables"]
     
-    custom_data = np.stack((
-        # Decision variables
-        pr['decision_variables_R1'].values, 
-        pr['decision_variables_R2'].values,
-        pr['decision_variables_qc'].values,
-        pr['decision_variables_Tdc_out'].values,   
-        pr['decision_variables_Twct_out'].values,   
-    ), axis=-1)
-    
-    # Build hover text
-    hover_text = f"""
-    <b>Decision variables</b><br>
-    - {cv['R1']['label']}: %{{customdata[0]:.2f}} {cv['R1']['unit']}<br>
-    - {cv['R2']['label']}: %{{customdata[1]:.2f}} {cv['R2']['unit']}<br>
-    - {cv['qc']['label']}: %{{customdata[2]:.1f}} {cv['qc']['unit']}<br>
-    - {cv['Tdc_out']['label']}: %{{customdata[3]:.1f}} {cv['Tdc_out']['unit']}<br>
-    - {cv['Twct_out']['label']}: %{{customdata[4]:.1f}} {cv['Twct_out']['unit']}<br>
-    """
+    custom_data, hover_text = generate_tooltip_data(pr=pareto_data, cv=config["variables"])
     
     # Add pareto front with tooltip, rounded filled markers and alpha 100%
     fig.add_trace(go.Scatter(x=pareto_data['costs_Cw'], y=pareto_data['costs_Ce'], name='Pareto front', 
@@ -322,9 +325,12 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
                             )
                  ) 
     
-    # Falta toda la parte de tooltips y demás
- 
-    return [dcc.Graph(figure=fig, id='pareto_front_plot')]
+    fig.update_layout(        
+        # plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+    )
+     
+    return [dcc.Graph(figure=fig, id='pareto_front_plot', animate=True, mathjax=True)] #style={'min-width': '400px'}]
 
 
 # Cache this callback
@@ -390,14 +396,172 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
                                              withPlaceholder=True, placeholder=[dmc.Loader(color="gray", size="sm")]
                                             ) 
     
-    # data = results[opcond_id][ptop_id]
+    # Build plots: comparison bar plot, electrical consumption pie plot, cooling power pie plot
+    # Get data
+    raw_data = pd.read_csv( os.path.join( config["raw_data_path"], opcond_id+'.csv') )
+    pareto_data = []
+    for ptop in results[opcond_id]:
+        pareto_data.append( flatten_dict( results[opcond_id][ptop] ) ) 
+
+    pareto_data = pd.DataFrame(pareto_data)
+    # Order pareto data by increasing values of Cw
+    pareto_data = pareto_data.sort_values(by=['costs_Cw'], ascending=True)
     
-    # # cooling_power
-    # flattened_dict = flatten_dict(data)
-    # # costs_dict = {k: v for k, v in flattened_dict.items() if k.startswith('costs_Ce_')}
+    # Create a dataframe for the selected data
+    df_s = pd.Series( flatten_dict( results[opcond_id][ptop_id] ) )
 
-    # df_costs = pd.DataFrame.from_dict(costs_dict, orient='index', columns=['value'])
+    Cw = pareto_data['costs_Cw']
+    Ce = pareto_data['costs_Ce']
 
+    min_Cw_idx = Cw.idxmin()
+    min_Ce_idx = Ce.idxmin()
+    
+    just_DC_idxs = raw_data.index[(raw_data['R1'] == 0) & (raw_data['R2'] == 0)]
+    # Out of these, choose the one with the lowest cost
+    just_DC_idx = raw_data['Ce'][just_DC_idxs].idxmin()
+
+    just_WCT_idxs = raw_data.index[(raw_data['R1'] == 1)]
+    # Out of these, choose the one with the lowest cost
+    just_WCT_idx = raw_data['Cw'][just_WCT_idxs].idxmin()
+
+    data = {
+        'Approach': ['Just DC', 'Min. Ce', 'Selected', 'Min. Cw', 'Just WCT'],
+        'Electricity Consumption (kWe)': [raw_data['Ce'][just_DC_idx], 
+                                          pareto_data['costs_Ce'][min_Ce_idx], 
+                                          df_s['costs_Ce'], 
+                                          pareto_data['costs_Ce'][min_Cw_idx], 
+                                          raw_data['Ce'][just_WCT_idx]],
+        
+        'Water Consumption (L/h)': [raw_data['Cw'][just_DC_idx],
+                                    pareto_data['costs_Cw'][min_Ce_idx],
+                                    df_s['costs_Cw'],
+                                    pareto_data['costs_Cw'][min_Cw_idx],
+                                    raw_data['Cw'][just_WCT_idx]]
+    }
+
+    custom_data, hover_text = generate_tooltip_data(pr=pareto_data, cv=config["variables"])
+
+    df = pd.DataFrame(data)
+
+    # Create subplots with 1 row and 2 columns
+    fig_bars = make_subplots(rows=1, cols=2, subplot_titles=('Electricity Consumption', 'Water Consumption'), shared_xaxes=True,x_title='Approach')
+
+    # Add bars for Electricity Consumption subplot
+    fig_bars.add_trace(go.Bar(
+        x=df['Approach'],
+        y=df['Electricity Consumption (kWe)'],
+        name='Electricity Consumption',
+        marker=dict(color=['#82b468', 'orange', '#b85450', '#6c8ebf', '#9572a5']),
+        customdata=custom_data, hovertemplate=hover_text,
+        showlegend=False
+    ), row=1, col=1)
+
+    # Add bars for Water Consumption subplot
+    fig_bars.add_trace(go.Bar(
+        x=df['Approach'],
+        y=df['Water Consumption (L/h)'],
+        name='Water Consumption',
+        marker=dict(color=['#82b468', 'orange', '#b85450', '#6c8ebf', '#9572a5']),
+        customdata=custom_data, hovertemplate=hover_text,
+        showlegend=False
+    ), row=1, col=2)
+
+    # Update layout
+    fig_bars.update_layout(
+        title='Comparison of Approaches',
+        # xaxis_title='Approach',
+        # xaxis2_title='Approach',
+        yaxis_title='kWe',
+        yaxis2_title='L/h',
+        yaxis2=dict(overlaying='y', side='right'),
+        barmode='group',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        # width="100%"
+    )
+    
+    # Pie plots for selected data
+    
+    fig_pies = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
+
+    Ce = np.abs(df_s['costs_Ce_dc']) + np.abs(df_s['costs_Ce_wct']) + np.abs(df_s['costs_Ce_c'])
+
+    # print(f'Ce_tot = {Ce:.1f}, Ce_dc = {df_s["costs_Ce_dc"]:.1f}, Ce_wct = {df_s["costs_Ce_wct"]:.1f}, Ce_c = {df_s["costs_Ce_c"]:.1f}')
+
+    # Data for the first pie plot
+    labels1 = ['DC', 'WCT', 'Pump']
+    values1 = [np.abs(df_s['costs_Ce_dc'])/Ce*100, np.abs(df_s['costs_Ce_wct']/Ce*100), np.abs(df_s['costs_Ce_c']/Ce*100)]
+    title1 = f'Electrical power <br>({Ce:.1f} kWe)</br>'
+
+    # Add first pie plot with legend, title, and labels/values inside slices
+    fig_pies.add_trace(go.Pie(
+        labels=labels1,
+        values=values1,
+        marker=dict(colors=['#82b468', '#9572a5', '#6c8ebf']),
+        showlegend=False,
+        title=title1,
+        hole=.4,
+        textposition='inside',
+        texttemplate='<b>%{label}</b><br>%{value:.1f} %</br>',
+        textinfo='label+percent',  # Display labels and percentages inside slices
+        insidetextorientation='radial'  # Display text radially inside slices
+    ), row=1, col=1)
+
+    m_dc = df_s['others_m_dc']
+    m_wct = df_s['others_m_wct']
+
+    Tdc_out = df_s['decision_variables_Tdc_out']
+    Tdc_in = df_s['others_Tdc_in']
+    Twct_out = df_s['decision_variables_Twct_out']
+    Twct_in = df_s['others_Twct_in']
+
+    # print(f'm_dc = {m_dc:.1f}, m_wct = {m_wct:.1f}, Tdc_out = {Tdc_out:.1f}, Tdc_in = {Tdc_in:.1f}, Twct_out = {Twct_out:.1f}, Twct_in = {Twct_in:.1f}')
+
+    Pth_dc = (df_s['decision_variables_Tdc_out'] - df_s['others_Tdc_in']) * df_s['others_m_dc']
+    Pth_wct = (df_s['decision_variables_Twct_out'] - df_s['others_Twct_in']) * df_s['others_m_wct']
+    Pth_tot = Pth_dc + Pth_wct
+
+    # Data for the second pie plot
+    labels2 = ['DC', 'WCT']
+    values2 = [Pth_dc/Pth_tot*100, Pth_wct/Pth_tot*100]
+    title2 = f'Cooling power <br>({df_s["cooling_requirements_Pth"]} kWth)</br>'
+
+    # Add second pie plot with legend, title, and labels/values inside slices
+    fig_pies.add_trace(go.Pie(
+        labels=labels2,
+        values=values2,
+        marker=dict(colors=['#82b468', '#9572a5']),
+        showlegend=False,
+        title=title2,
+        hole=.4,
+        textposition='inside',
+        texttemplate='<b>%{label}</b><br>%{value:.1f} %</br>',
+        textinfo='label+percent',  # Display labels and percentages inside slices
+        insidetextorientation='radial'  # Display text radially inside slices
+    ), row=1, col=2)
+
+    # Update layout
+    fig_pies.update_layout(
+        title_text='Relative contribution of each component <br>to electricity consumption and cooling power </br>',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=700,
+        # width=500
+    )
+                    #   margin=dict(t=30, b=100))  # Adjust bottom margin (b) to control spacing)
+
+    
+
+    header_group = dmc.Group(
+        [
+            dcc.Graph(figure=fig_bars, animate=True, mathjax=True, style={'min-width': '400px', 'width': "100%"},),
+            dcc.Graph(figure=fig_pies, animate=True, mathjax=True, style={'min-width': '400px'}),
+        ],
+        spacing='xs',
+        position="center",
+        grow=True,
+        noWrap=False
+    )
     
     # header_group = dmc.Group(
     #     [
@@ -435,7 +599,7 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
     layout = dmc.Stack(
         [
             # Plots at top
-            # header_group,
+            header_group,
             # Diagram
             diagram
         ],

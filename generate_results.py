@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 import argparse
 import math
@@ -464,10 +465,12 @@ def generate_diagrams(results):
             ptop = results[op_cond][ptop_]
             
             try:
-                diagram = generate_diagram(diagram, ptop)
+                diagram_copy = deepcopy(diagram)
+                diagram_light = generate_diagram(diagram_copy, ptop)
                 
                 if args.dark_variant:
-                    diagram_dark = generate_diagram(diagram, ptop, theme='dark')
+                    diagram_copy = deepcopy(diagram)
+                    diagram_dark = generate_diagram(diagram_copy, ptop, theme='dark')
                     
             except Exception as e:
                 logging.error(f'Error generating diagram for operation point {ptop_id}.')
@@ -475,7 +478,7 @@ def generate_diagrams(results):
                 
             
             with open(os.path.join(output_folder, ptop_id+'.svg'), 'w') as diagram_file:
-                diagram_file.write( etree.tostring(diagram).decode() )
+                diagram_file.write( etree.tostring(diagram_light).decode() )
                 
             logging.info(f'Diagram for operation point {ptop_id} generated.')
             

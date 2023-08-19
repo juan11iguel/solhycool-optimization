@@ -5,11 +5,13 @@
     // "debug":true,
     "title": "SOLhycool",
     "nomenclature_diagram": "WASCOP-nomenclature.svg",
-    "url_base_pathname": "/solhycool/",
+    // "url_base_pathname": "/solhycool/",
     // "pathname_prefix": "/",
     // "assets_folder": "simulated_system/" # In docker deployments this won't be used
-    "raw_data_path": "assets/optimization_V0"
-    "pareto_results_path": 'assets/optimization_V1/results.json'
+    // "raw_data_path": "assets/optimization_V0"
+    // "pareto_results_path": 'assets/optimization_V1/results.json'
+    "raw_data_path": "/home/patomareao/Nextcloud/Juanmi_MED_PSA/WASCOP/Optimización/resultados/optimization_V0"
+    "pareto_results_path": "/home/patomareao/Nextcloud/Juanmi_MED_PSA/WASCOP/Optimización/resultados/optimization_V1/results.json"
     // "diagrams_path": "../resultados/optimization_V1/diagrams"
     
     "variables":{
