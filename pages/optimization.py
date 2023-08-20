@@ -21,6 +21,11 @@ from utilities import globals
 app = dash.get_app()
 config = globals.config
 
+text_color_dark = "#ffffff"
+text_color_light = "#2a3f5f"
+plt_bg_light = "#ededed"
+plt_bg_dark = "#1a1b1e"
+
 dash.register_page(
     __name__,
     path="/optimization",
@@ -40,7 +45,8 @@ dash.register_page(
 with open(config["pareto_results_path"], mode="r", encoding='utf-8') as file: 
     results = json.loads(file.read())
 
-if os.getenv("CACHE_TYPE", default="local") == "redis":
+CACHE_TYPE = os.getenv("CACHE_TYPE", default=None)
+if  CACHE_TYPE == "redis":
     cache = Cache(
             app.server,
             config={
@@ -49,7 +55,7 @@ if os.getenv("CACHE_TYPE", default="local") == "redis":
                 "CACHE_REDIS_PORT": os.getenv("REDIS_PORT", default=6379),
             },
         )
-else:
+elif CACHE_TYPE == 'local':
     cache = Cache(
         app.server, 
         config={
@@ -61,6 +67,8 @@ else:
             'CACHE_THRESHOLD': 20
         }
     )
+else:
+    cache = Cache(app.server, config={"CACHE_TYPE": "null"})
 
 
 def create_figure():
@@ -326,9 +334,11 @@ def update_pareto(n_clicks, Tamb_str, HR_str, Tv_str, Pth_str, current_theme):
                  ) 
     
     fig.update_layout(        
-        # plot_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor=plt_bg_light if current_theme=='light' else plt_bg_dark,
         paper_bgcolor='rgba(0,0,0,0)',
     )
+    # fig.update_yaxes(automargin=True)
+    # fig.update_xaxes(automargin=True)
      
     return [dcc.Graph(figure=fig, id='pareto_front_plot', animate=True, mathjax=True)] #style={'min-width': '400px'}]
 
@@ -444,15 +454,17 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
     df = pd.DataFrame(data)
 
     # Create subplots with 1 row and 2 columns
-    fig_bars = make_subplots(rows=1, cols=2, subplot_titles=('Electricity Consumption', 'Water Consumption'), shared_xaxes=True,x_title='Approach')
+    fig_bars = make_subplots(rows=1, cols=2, subplot_titles=('Electricity <br>consumption</br>', 'Water <br>consumption</br>'), 
+                             shared_xaxes=True,)#x_title='Approach')
 
     # Add bars for Electricity Consumption subplot
     fig_bars.add_trace(go.Bar(
         x=df['Approach'],
         y=df['Electricity Consumption (kWe)'],
-        name='Electricity Consumption',
+        # name='Electricity consumption',
         marker=dict(color=['#82b468', 'orange', '#b85450', '#6c8ebf', '#9572a5']),
         customdata=custom_data, hovertemplate=hover_text,
+        texttemplate='%{value:.1f}',
         showlegend=False
     ), row=1, col=1)
 
@@ -460,7 +472,8 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
     fig_bars.add_trace(go.Bar(
         x=df['Approach'],
         y=df['Water Consumption (L/h)'],
-        name='Water Consumption',
+        # name='Water <br>Consumption<br>',
+        texttemplate='%{value:.1f}',
         marker=dict(color=['#82b468', 'orange', '#b85450', '#6c8ebf', '#9572a5']),
         customdata=custom_data, hovertemplate=hover_text,
         showlegend=False
@@ -468,7 +481,7 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
 
     # Update layout
     fig_bars.update_layout(
-        title='Comparison of Approaches',
+        title=dict(text='Comparison of Approaches', x=0.5, y=0.99, xanchor='center', yanchor='top'),
         # xaxis_title='Approach',
         # xaxis2_title='Approach',
         yaxis_title='kWe',
@@ -477,8 +490,13 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
         barmode='group',
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        # width="100%"
+        height=400,
+        margin=dict(t=90, b=5, l=5, r=5),
+        template= 'ggplot2' if current_theme=='light' else 'plotly_dark'
     )
+    
+    # fig_bars.update_yaxes(automargin=True)
+    # fig_bars.update_xaxes(automargin=True)
     
     # Pie plots for selected data
     
@@ -545,17 +563,23 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
         title_text='Relative contribution of each component <br>to electricity consumption and cooling power </br>',
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        height=700,
+        height=400,
+        autosize=True,
+        margin=dict(t=50, b=0, l=5, r=5),
+        template= 'ggplot2' if current_theme=='light' else 'plotly_dark'
         # width=500
     )
+    
+    fig_pies.update_yaxes(automargin=True)
+    fig_pies.update_xaxes(automargin=True)
                     #   margin=dict(t=30, b=100))  # Adjust bottom margin (b) to control spacing)
 
     
 
     header_group = dmc.Group(
         [
-            dcc.Graph(figure=fig_bars, animate=True, mathjax=True, style={'min-width': '400px', 'width': "100%"},),
-            dcc.Graph(figure=fig_pies, animate=True, mathjax=True, style={'min-width': '400px'}),
+            dcc.Graph(figure=fig_bars, animate=True, mathjax=True, style={'min-width': '400px', 'width': "800px"},),
+            dcc.Graph(figure=fig_pies, animate=True, mathjax=True, style={'min-width': '400px', 'width': "800px"},),
         ],
         spacing='xs',
         position="center",

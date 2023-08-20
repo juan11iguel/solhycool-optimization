@@ -59,6 +59,8 @@ services:
       
     environment:
       CONF_FILE: configuration_files/wascop_app.hjson
+      CHANGE_DELAY: 20
+      COOLDOWN_PERIOD: 60
 
     labels:
       # Whatchtower

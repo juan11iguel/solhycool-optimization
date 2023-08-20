@@ -47,27 +47,29 @@ CHANGE_DELAY = os.getenv("CHANGE_DELAY", default=20)  # seconds
 # After an action is triggered, it cannot be triggered again until COOLDOWN_PERIOD seconds have passed
 COOLDOWN_PERIOD = os.getenv("COOLDOWN_PERIOD", default=60)  # seconds
 
+logging.info(f"Loaded parameters: CHANGE_DELAY={CHANGE_DELAY} (sec), COOLDOWN_PERIOD={COOLDOWN_PERIOD} (sec)")
+
 class MyHandler(FileSystemEventHandler):
     def __init__(self):
-        self.last_change_time = 0
         self.last_action_time = 0
 
     def on_modified(self, event):
         if not event.is_directory:
             current_time = time.time()
+            
+            time.sleep(CHANGE_DELAY)
 
-            if current_time - self.last_change_time >= CHANGE_DELAY:
-                self.last_change_time = current_time
-
-                if current_time - self.last_action_time >= COOLDOWN_PERIOD:
-                    logging.info(f"Detected change in {event.src_path}")
-                    
-                    results = generate_results_file()
-                    generate_diagrams(results)
-                    
-                    self.last_action_time = current_time
-                    
-                    logging.info("Functions executed")
+            if current_time - self.last_action_time >= COOLDOWN_PERIOD:
+                logging.info(f"Detected change in {event.src_path}")
+                
+                results = generate_results_file()
+                generate_diagrams(results)
+                
+                self.last_action_time = current_time
+                
+                logging.info("Functions executed")
+            else:
+                logging.info(f"Detected change in {event.src_path}, but cooldown period is not over yet, ignoring...")
 
 def generate_results_file():
     # Join the given folder path with a default filename 'results.json'
