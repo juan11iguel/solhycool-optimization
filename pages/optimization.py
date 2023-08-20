@@ -2,7 +2,7 @@
 import os
 import dash
 import dash_mantine_components as dmc
-from dash import dcc, html, Input, Output, State, callback
+from dash import dcc, html, Input, Output, State, callback, clientside_callback
 from dash_iconify import DashIconify
 import hjson
 import json
@@ -147,6 +147,7 @@ def generate_tooltip_data(pr, cv):
 
 layout = html.Div(
     [
+        html.Div(id='viewport-container'),
         dmc.Container(
             size="lg",
             mt=30,
@@ -174,7 +175,7 @@ layout = html.Div(
                     mx=30,
                     mb=50,
                     id="segmented_control_HR",
-                    value=str(config["variables"]["HR"]["values"][0]),
+                    value=str(config["variables"]["HR"]["values"][1]),
                 ),
                 
                 create_section_title("Cooling requirements", id="cooling_requirements",),
@@ -187,7 +188,7 @@ layout = html.Div(
                     fullWidth=True,
                     mx=30,
                     id="segmented_control_Tv",
-                    value=str(config["variables"]["Tv"]["values"][0]),
+                    value=str(config["variables"]["Tv"]["values"][1]),
                 ),
                 
                 create_item("Thermal power (Pth, kWth)"),
@@ -200,7 +201,7 @@ layout = html.Div(
                     mx=30,
                     mb=40,
                     id="segmented_control_Pth",
-                    value=str(config["variables"]["Pth"]["values"][0]),
+                    value=str(config["variables"]["Pth"]["values"][-1]),
                 ),
                 
                 dmc.Group(
@@ -239,6 +240,34 @@ layout = html.Div(
         ),
     ]
 )
+
+# Ajdust padding of results container
+# clientside_callback(
+#     """function(href) {
+#         var w = window.innerWidth;
+#         if (w<600) {
+#             return 5;
+#         else{
+#             return dash_clientside.no_update
+#         }
+#     }""",
+#     Output("results_container", "px"),
+#     Input("", "n_clicks"),
+#     Input("color-scheme-toggle-burger", "n_clicks"),
+#     State("theme-store", "data"),
+# )
+
+# app.clientside_callback(
+#     """
+#     function(href) {
+#         var w = window.innerWidth;
+#         var h = window.innerHeight;
+#         return {'height': h, 'width': w};
+#     }
+#     """,
+#     Output('viewport-container', 'children'),
+#     Input('url', 'href')
+# )
 
 # Cache this callback
 # Callback to update results visualization
@@ -401,10 +430,11 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
         caption = f"""Facility diagram with highlighted components and flow paths for cooling requirements: Tv={Tv}ºC and Pth={Pth}kWth,
         environment conditions: Tamb={Tamb}ºC and HR={HR}% and decision variables: R1={R1}, R2={R2}, Qc={qc} m³/h, Tdc,out={Tdc_out} ºC and Twct,out={Twct_out} ºC."""
         
-        diagram = dmc.Image(src=os.path.join(diagram_path, diagram_name), alt="wascop-diagram", 
-                                             caption=caption, width="100%",
-                                             withPlaceholder=True, placeholder=[dmc.Loader(color="gray", size="sm")]
-                                            ) 
+        diagram = dmc.Image(
+            src=os.path.join(diagram_path, diagram_name), alt="wascop-diagram", 
+            caption=caption, width="100%",
+            withPlaceholder=True, placeholder=[dmc.Loader(color="gray", size="sm")]
+        ) 
     
     # Build plots: comparison bar plot, electrical consumption pie plot, cooling power pie plot
     # Get data
@@ -570,16 +600,24 @@ def update_results(clickedData, Tamb_str, HR_str, Tv_str, Pth_str, current_theme
         # width=500
     )
     
-    fig_pies.update_yaxes(automargin=True)
-    fig_pies.update_xaxes(automargin=True)
+    # fig_pies.update_yaxes(automargin=True)
+    # fig_pies.update_xaxes(automargin=True)
                     #   margin=dict(t=30, b=100))  # Adjust bottom margin (b) to control spacing)
 
     
 
     header_group = dmc.Group(
         [
-            dcc.Graph(figure=fig_bars, animate=True, mathjax=True, style={'min-width': '400px', 'width': "800px"},),
-            dcc.Graph(figure=fig_pies, animate=True, mathjax=True, style={'min-width': '400px', 'width': "800px"},),
+            dmc.MediaQuery(
+                [dcc.Graph(figure=fig_bars, animate=True, mathjax=True, )], # style={'width': "800px"},
+                smallerThan='sm',
+                styles={'max-width':'80vw'}
+            ),
+            dmc.MediaQuery(
+                [dcc.Graph(figure=fig_pies)], # style={'width': "800px"}
+                smallerThan='sm',
+                styles={'max-width':'80vw'}
+            ),
         ],
         spacing='xs',
         position="center",
