@@ -41,13 +41,33 @@ nsmap = {
     'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
     }
 
+# Whenever a change is detected, action is triggered after CHANGE_DELAY seconds
+CHANGE_DELAY = os.getenv("CHANGE_DELAY", default=20)  # seconds
+
+# After an action is triggered, it cannot be triggered again until COOLDOWN_PERIOD seconds have passed
+COOLDOWN_PERIOD = os.getenv("COOLDOWN_PERIOD", default=60)  # seconds
+
 class MyHandler(FileSystemEventHandler):
+    def __init__(self):
+        self.last_change_time = 0
+        self.last_action_time = 0
+
     def on_modified(self, event):
         if not event.is_directory:
-            logging.info(f"Detected change in {event.src_path}")
-            results = generate_results_file()
-            generate_diagrams(results)
-            logging.info("Functions executed")
+            current_time = time.time()
+
+            if current_time - self.last_change_time >= CHANGE_DELAY:
+                self.last_change_time = current_time
+
+                if current_time - self.last_action_time >= COOLDOWN_PERIOD:
+                    logging.info(f"Detected change in {event.src_path}")
+                    
+                    results = generate_results_file()
+                    generate_diagrams(results)
+                    
+                    self.last_action_time = current_time
+                    
+                    logging.info("Functions executed")
 
 def generate_results_file():
     # Join the given folder path with a default filename 'results.json'
@@ -506,5 +526,7 @@ if __name__ == '__main__':
         observer.stop()
     
     observer.join()
-    results = generate_results_file()
-    generate_diagrams(results)
+    
+    logging.info("Program finished")
+    # results = generate_results_file()
+    # generate_diagrams(results)
