@@ -148,6 +148,18 @@ def convert_to_float_if_possible(value):
     except ValueError:
         return value
 
+def change_text(diagram, object_id, new_text):
+    obj = diagram.xpath(f'//svg:g[@id="cell-{object_id}"]', namespaces=nsmap)
+    
+    for child in obj[0]:
+        if child.tag.endswith('g'):
+            for child2 in child:
+                if child2.tag.endswith('text'):
+                    child2.text = new_text
+                    break
+
+    return diagram
+
 def get_y(x, xmin, xmax, ymin, ymax):
     return ((ymax - ymin) / (xmax - xmin)) * (x - xmin) + ymin
 
@@ -252,8 +264,8 @@ def generate_diagram(diagram, ptop, theme='light'):
     folder_path = os.path.dirname(args.src_diagram_path) 
     
     # Líneas
-    lineas = ["line_c_in", "line_c_out", "line_r2", "line_dc_in", "line_dc_out",
-            "line_r1_out1", "line_r1_out2", "line_wct_in", "line_wct_out", "line_pump_in"]
+    lineas = ["line_c_in", "line_c_out", "line_r1", "line_dc_in", "line_dc_out",
+              "line_r2_out1", "line_r2_out2", "line_wct_in", "line_wct_out", "line_pump_in"]
 
     line_c_max = 15
     line_c_min = 10
@@ -289,36 +301,36 @@ def generate_diagram(diagram, ptop, theme='light'):
         for child in tag[0]:
             child.set("stroke-width", str(line_width))
             
-    tag = tags["line_r2"]
-    width_line_r2 = line_width*(1-dv["R2"])
+    tag = tags["line_r1"]
+    width_line_r1 = line_width*(dv["R1"])
     # Línea y flecha
     for child in tag[0]:
-        child.set("stroke-width", str(width_line_r2))
+        child.set("stroke-width", str(width_line_r1))
 
-    width_line_dc = line_width*(dv["R2"])
+    width_line_dc = line_width*(1-dv["R1"])
     for line in ["line_dc_in", "line_dc_out"]:
         tag = tags[line]
         # Línea y flecha
         for child in tag[0]:
             child.set("stroke-width", str(width_line_dc))
 
-    tag = tags["line_r1_out1"]
-    width_r1_out2 = width_line_dc*(1-dv["R1"])
+    tag = tags["line_r2_out1"]
+    width_r2_out1 = width_line_dc*(1-dv["R2"])
     # Línea y flecha
     for child in tag[0]:
-        child.set("stroke-width", str(width_r1_out2))        
+        child.set("stroke-width", str(width_r2_out1))        
             
-    tag = tags["line_r1_out2"]
-    width_line_r1_out2 = width_line_dc*(dv["R1"])
+    tag = tags["line_r2_out2"]
+    width_line_r2_out2 = width_line_dc*(dv["R2"])
     # Línea y flecha
     for child in tag[0]:
-        child.set("stroke-width", str(width_line_r1_out2))    
+        child.set("stroke-width", str(width_line_r2_out2))    
                 
     for line in ["line_wct_in", "line_wct_out"]:
         tag = tags[line]
         # Línea y flecha
         for child in tag[0]:
-            child.set("stroke-width", str(width_line_r2 + width_line_r1_out2) )
+            child.set("stroke-width", str(width_line_r1 + width_line_r2_out2) )
     
     # Modificar tamaño de iconos y añadir template-id para texto
 
@@ -416,6 +428,14 @@ def generate_diagram(diagram, ptop, theme='light'):
     diagram = update_image(diagram, image_path, object_id='cost_w_wct')
     tag = tags['cost_w_wct']
     tag = adjust_icon('Cw_wct', 70, tag, value, 'L/h', include_boundary=False, max_size=None, max_value=None)
+    
+    # Change text for additional variables
+    object_ids = ['Twct_in', 'qwct', 'qdc']
+    values = [ptop['others']['Twct_in'], ptop['others']['m_wct'], ptop['others']['m_dc']]
+    units  = ['°C', 'm³/h', 'm³/h']
+
+    for object_id, value, unit in zip(object_ids, values, units):
+        diagram = change_text(diagram, object_id, f'{round_to_nonzero_decimal(value)} {unit}')
     
     # Change background depending on theme
     if theme=='dark':

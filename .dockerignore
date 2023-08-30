@@ -4,4 +4,6 @@ tmp/*
 Dockerfile
 docker_compose_files/*
 configuration_files/*
-.code-workspace
+*.code-workspace
+.vscode/*
+Dockerfile

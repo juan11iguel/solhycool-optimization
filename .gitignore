@@ -1,5 +1,7 @@
 assets/*
 *pycache*
 tmp/*
-.code-workspace
+*.code-workspace
+.vscode/*
+```
 
