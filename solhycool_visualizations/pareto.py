@@ -8,7 +8,9 @@ import pandas as pd
 symbols = SymbolValidator().values[2::12]
 symbols_open = SymbolValidator().values[3::12]
 
+
 def pareto_plot(opt_results: dict, ) -> go.Figure:
+
     fig = go.Figure()
 
     # Add vertical area for values of Cw < 150

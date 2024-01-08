@@ -1,3 +1,4 @@
+import copy
 import plotly.express as px
 
 # Colors definition
@@ -19,4 +20,4 @@ color_palette = {
 }
 
 default_fontsize = 16
-plt_colors = px.colors.qualitative.Plotly
+plt_colors = px.colors.qualitative.Plotly * 3 # * 3 to have plenty of colors

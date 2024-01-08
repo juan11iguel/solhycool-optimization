@@ -1,4 +1,5 @@
-from copy import deepcopy
+from pathlib import Path
+from typing import Literal
 import json
 import math
 import os
@@ -19,6 +20,7 @@ nsmap = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
 }
+
 
 def generate_results_file():
     # Join the given folder path with a default filename 'results.json'
@@ -142,9 +144,9 @@ def adjust_icon(id, size, tag, value, unit, include_boundary=True, max_size=None
         if child.tag.endswith('g'):
             for child2 in child:
                 if 'text' in child2.tag:
-                    if type(value) == str:
+                    if isinstance(value, str):
                         child2.text = f'{value} {unit}'
-                    elif type(value) == int:
+                    elif isinstance(value, int):
                         child2.text = f'{value} {unit}'
                     else:
                         child2.text = f'{round_to_nonzero_decimal(value)} {unit}'
@@ -213,21 +215,30 @@ def update_image(diagram, image_path, object_id):
     return diagram
 
 
-def generate_diagram(diagram, ptop, src_diagram_path, theme='light'):
+def generate_diagram(src_diagram_path, ptop, theme='light'):
+
+    # Load source diagram
+    with open(src_diagram_path, 'r') as f:
+        diagram = etree.parse(f)
+
     # Extract assets folder from the original diagram path
     folder_path = os.path.dirname(src_diagram_path)
 
     # Líneas
-    lineas = ["line_c_in", "line_c_out", "line_r1", "line_dc_in", "line_dc_out",
-              "line_r2_out1", "line_r2_out2", "line_wct_in", "line_wct_out", "line_pump_in"]
+    lineas = [
+        "line_c_in", "line_c_out", "line_r1", "line_dc_in", "line_dc_out",
+        "line_r2_out1", "line_r2_out2", "line_wct_in", "line_wct_out", "line_pump_in"
+    ]
 
     line_c_max = 15
     line_c_min = 10
 
     # Iconos
-    iconos = ["cost_e_dc", "cost_e_wct", "cost_w_wct", "cooling_req", "fan_dc",
-              "fan_wct", "temp_amb", "hr_amb", "temp_dc", "temp_wct", "valve_r1",
-              "valve_r2"]
+    iconos = [
+        "cost_e_dc", "cost_e_wct", "cost_w_wct", "cooling_req", "fan_dc",
+        "fan_wct", "temp_amb", "hr_amb", "temp_dc", "temp_wct", "valve_r1",
+        "valve_r2"
+    ]
 
     # Cuadros de texto
     textos = ["line_c_in_text", "line_c_out_text", "pump_c_text"]
@@ -235,6 +246,7 @@ def generate_diagram(diagram, ptop, src_diagram_path, theme='light'):
     # Define some short names
     op_r = ptop["operating_range"]
     dv = ptop["decision_variables"]
+    cr = ptop["cooling_requirements"]
 
     # Get objects to update in diagram
     tags = {}
@@ -245,7 +257,6 @@ def generate_diagram(diagram, ptop, src_diagram_path, theme='light'):
             raise ValueError(f'Object {object_} not found in diagram')
 
     # Modificar grosor de líneas
-
     x = dv["qc"];
     xmin = op_r["qc_min"];
     xmax = op_r["qc_max"];
@@ -336,7 +347,7 @@ def generate_diagram(diagram, ptop, src_diagram_path, theme='light'):
     # ["line_c_in_text", "line_c_out_text", "pump_c_text"]
 
     for text_box, var_id, group, unit in zip(["line_c_in_text", "line_c_out_text", "pump_c_text"],
-                                             ["Tc_in", "Tc_out", "qc"],
+                                             ["Tc_in", "Tc_out", "q_c"],
                                              ["others", "others", "decision_variables"],
                                              ["°C", "°C", "m3/h"]):
 
@@ -352,8 +363,6 @@ def generate_diagram(diagram, ptop, src_diagram_path, theme='light'):
     # Cooling requirements
     icon_id = 'cooling_req'
     tag = tags[icon_id];
-
-    cr = ptop["cooling_requirements"]
 
     x = cr['Pth']
     xmin = op_r['Pth_min'];
@@ -447,48 +456,15 @@ def generate_diagram(diagram, ptop, src_diagram_path, theme='light'):
     return diagram
 
 
-def generate_diagrams(results):
-    diagram_file = args.src_diagram_path
-    output_folder = os.path.join(args.results_folder_path, 'diagrams')
+def generate_facility_diagram(src_diagram_path: Path, ptop: dict, save_diagram: bool = False, output_path: Path = None,
+                              theme:Literal['light', 'dark'] = 'light') -> etree.Element:
 
-    # Load source diagram
-    with open(diagram_file, 'r') as f:
-        diagram = etree.parse(f)
+    diagram = generate_diagram(src_diagram_path, ptop, theme=theme)
 
-    # From the results file, identify operation points which already have a generated diagram
-    existing_diagram_files = os.listdir(output_folder)
+    if save_diagram:
+        with open(output_path + '.svg', 'w') as diagram_file:
+            diagram_file.write(etree.tostring(diagram).decode())
 
-    # Iterate over the operation points
-    for op_cond in results:
-        for ptop_ in results[op_cond]:
-            ptop_id = f'{op_cond}_{ptop_}'
+            logger.info(f'Diagram saved in {output_path}.svg')
 
-            if ptop_id in existing_diagram_files:
-                logging.info(f'Diagram for operation point {ptop_id} already exists. Not generating a new one.')
-                continue
-
-            ptop = results[op_cond][ptop_]
-
-            try:
-                diagram_copy = deepcopy(diagram)
-                diagram_light = generate_diagram(diagram_copy, ptop)
-
-                if args.dark_variant:
-                    diagram_copy = deepcopy(diagram)
-                    diagram_dark = generate_diagram(diagram_copy, ptop, theme='dark')
-
-            except Exception as e:
-                logging.error(f'Error generating diagram for operation point {ptop_id}.')
-                logging.error(e)
-
-            with open(os.path.join(output_folder, ptop_id + '.svg'), 'w') as diagram_file:
-                diagram_file.write(etree.tostring(diagram_light).decode())
-
-            logging.info(f'Diagram for operation point {ptop_id} generated.')
-
-            if args.dark_variant:
-                with open(os.path.join(output_folder, ptop_id + '_dark.svg'), 'w') as diagram_file:
-                    diagram_file.write(etree.tostring(diagram_dark).decode())
-
-                logging.info(f'Dark variant of diagram for operation point {ptop_id} generated.')
-
+    return diagram
