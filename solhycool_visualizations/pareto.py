@@ -1,7 +1,7 @@
 # Pareto plot
 import plotly
 from plotly.validators.scatter.marker import SymbolValidator
-from .constants import color_palette, plt_colors, default_fontsize, newshape_style
+from phd_visualizations.constants import color_palette, plt_colors, default_fontsize, newshape_style
 import plotly.graph_objects as go
 import pandas as pd
 from . import generate_tooltip_data

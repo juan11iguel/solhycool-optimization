@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import List, Literal
 from loguru import logger
-from .constants import color_palette, plt_colors, default_fontsize, newshape_style
+from phd_visualizations.constants import color_palette, plt_colors, default_fontsize, newshape_style
 
 def costs_pie_plot(df: pd.DataFrame, current_theme: Literal['light', 'dark'] = 'light') -> go.Figure:
 
