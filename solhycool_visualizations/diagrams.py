@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import Literal
-import json
 import math
 import os
 import logging
-import re
 from lxml import etree
 import base64
 from loguru import logger
@@ -20,65 +18,6 @@ nsmap = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
 }
-
-
-def generate_results_file():
-    # Join the given folder path with a default filename 'results.json'
-    results_path = os.path.join(args.results_folder_path, 'results.json')
-
-    # Read existing JSON file, if it exists
-    data = {}
-    try:
-        with open(results_path, 'r') as file:
-            data = json.load(file)
-            logging.info(f'File {results_path} loaded.')
-    except FileNotFoundError:
-        data = {}
-        logging.warning(f'File {results_path} not found. Creating a new one.')
-
-    # Gather all the results files in the folder that have a filename structure: 'ptop_*.json'
-    ptop_files = [f for f in os.listdir(args.results_folder_path) if
-                  os.path.isfile(os.path.join(args.results_folder_path, f)) and f.startswith('ptop_') and f.endswith(
-                      '.json')]
-
-    for ptop_id in ptop_files:
-        # Read the results file
-        ptops_file_path = os.path.join(args.results_folder_path, ptop_id)
-        with open(ptops_file_path, 'r') as file:
-            ptop = json.load(file)
-
-            # Check if environment and cooling requirements exist
-            # Extract text from ptop_ to _R1 (not including ptop_ and _R1)
-            env_cool_req_id = re.search(r'ptop_(.*?)_R1', ptop_id).group(1)
-
-            if env_cool_req_id in data:
-                logging.info(f'Adding new data to operation conditions {env_cool_req_id}')
-            else:
-                logging.info(f'Creating new operation conditions {env_cool_req_id}')
-                data[env_cool_req_id] = {}
-
-            # Check if the operation point exists
-            # Extract text from _R1 to .json (including _R1 but not .json)
-            optpt_id = 'R1' + re.search(r'_R1(.*?)\.json', ptop_id).group(1)
-
-            if optpt_id in data[env_cool_req_id]:
-                logging.info(f'Updating operation point {optpt_id}')
-            else:
-                logging.info(f'Creating new operation point {optpt_id}')
-
-            data[env_cool_req_id][optpt_id] = ptop
-
-        logging.debug(f'Saving operation point: {optpt_id}')
-
-    # Write the serialized JSON to the file
-    output_path = os.path.join(args.results_folder_path, 'results.json')
-    with open(output_path, 'w') as f:
-        json.dump(data, f, indent=4)
-
-    logging.info(f'File {output_path} updated.')
-
-    return data
-
 
 # Diagram generation auxiliary functions
 def round_to_nonzero_decimal(n):
@@ -215,7 +154,7 @@ def update_image(diagram, image_path, object_id):
     return diagram
 
 
-def generate_diagram(src_diagram_path, ptop, theme='light'):
+def generate_diagram(src_diagram_path: Path, case_study: dict, theme='light'):
 
     # Load source diagram
     with open(src_diagram_path, 'r') as f:
@@ -223,6 +162,11 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
 
     # Extract assets folder from the original diagram path
     folder_path = os.path.dirname(src_diagram_path)
+
+    # Define some short names
+    ptop = case_study['solutions'][ case_study['selected_solution_idx'] - 1 ] # -1 because MATLAB index starts at 1
+    op_r = case_study["limits"]
+    cr = case_study["cooling_requirements"]
 
     # Líneas
     lineas = [
@@ -243,11 +187,6 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
     # Cuadros de texto
     textos = ["line_c_in_text", "line_c_out_text", "pump_c_text"]
 
-    # Define some short names
-    op_r = ptop["operating_range"]
-    dv = ptop["decision_variables"]
-    cr = ptop["cooling_requirements"]
-
     # Get objects to update in diagram
     tags = {}
     for object_ in lineas + iconos + textos:
@@ -257,7 +196,7 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
             raise ValueError(f'Object {object_} not found in diagram')
 
     # Modificar grosor de líneas
-    x = dv["qc"];
+    x = ptop["q_c"];
     xmin = op_r["qc_min"];
     xmax = op_r["qc_max"];
     ymin = line_c_min;
@@ -271,12 +210,12 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
             child.set("stroke-width", str(line_width))
 
     tag = tags["line_r1"]
-    width_line_r1 = line_width * (dv["R1"])
+    width_line_r1 = line_width * (ptop["R1"])
     # Línea y flecha
     for child in tag[0]:
         child.set("stroke-width", str(width_line_r1))
 
-    width_line_dc = line_width * (1 - dv["R1"])
+    width_line_dc = line_width * (1 - ptop["R1"])
     for line in ["line_dc_in", "line_dc_out"]:
         tag = tags[line]
         # Línea y flecha
@@ -284,13 +223,13 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
             child.set("stroke-width", str(width_line_dc))
 
     tag = tags["line_r2_out1"]
-    width_r2_out1 = width_line_dc * (1 - dv["R2"])
+    width_r2_out1 = width_line_dc * (1 - ptop["R2"])
     # Línea y flecha
     for child in tag[0]:
         child.set("stroke-width", str(width_r2_out1))
 
     tag = tags["line_r2_out2"]
-    width_line_r2_out2 = width_line_dc * (dv["R2"])
+    width_line_r2_out2 = width_line_dc * (ptop["R2"])
     # Línea y flecha
     for child in tag[0]:
         child.set("stroke-width", str(width_line_r2_out2))
@@ -313,9 +252,10 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
     min_size = 30
 
     icon_ids = ["fan_dc", "fan_wct", "valve_r1", "valve_r2", "temp_amb", "hr_amb", "temp_wct", "temp_dc"]
-    var_ids = ["w_fan_dc", "w_fan_wct", "R1", "R2", "Tamb", "HR", "Twct_out", "Tdc_out"]
-    groups = ["control_variables", "control_variables", "decision_variables", "decision_variables", "environment",
-              "environment", "decision_variables", "decision_variables"]
+    var_ids = ["w_dc", "w_wct", "R1", "R2", "Tamb", "HR", "Twct_out", "Tdc_out"]
+    objs = [
+        ptop, ptop, ptop, ptop, case_study["environment"], case_study["environment"], ptop, ptop
+    ]
     units = ["%", "%", "", "", "degree_celsius", "%", "degree_celsius", "degree_celsius"]
     boundaries = [True, True, False, False, True, True, True, True]
 
@@ -325,20 +265,20 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
 
     # max_values = []
     # pos_xs = []; pos_ys = []
-    for var_id, icon_id, group, unit, boundary in zip(var_ids, icon_ids, groups, units, boundaries):
+    for var_id, icon_id, obj, unit, boundary in zip(var_ids, icon_ids, objs, units, boundaries):
         tag = tags[icon_id];
         id_ = var_id
-        x = ptop[group][id_]
+        x = obj[id_]
         xmin = op_r[id_ + '_min'];
         xmax = op_r[id_ + '_max'];
         ymin = min_size;
         ymax = max_size
         size = get_y(x, xmin, xmax, ymin, ymax)
 
-        logging.debug(f'var_id: {var_id}, icon_id: {icon_id}, group: {group}, unit: {unit}, value: {ptop[group][id_]}')
+        logging.debug(f'var_id: {var_id}, icon_id: {icon_id}, unit: {unit}, value: {obj[id_]}')
 
         # max_values.append(xmax)
-        tag = adjust_icon(id_, size, tag, convert_to_float_if_possible(ptop[group][id_]),
+        tag = adjust_icon(id_, size, tag, convert_to_float_if_possible(obj[id_]),
                           unit, include_boundary=boundary, max_size=max_size, max_value=xmax)
         # pos_xs.append(pos_x); pos_ys.append(pos_y)
 
@@ -348,8 +288,8 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
 
     for text_box, var_id, group, unit in zip(["line_c_in_text", "line_c_out_text", "pump_c_text"],
                                              ["Tc_in", "Tc_out", "q_c"],
-                                             ["others", "others", "decision_variables"],
-                                             ["°C", "°C", "m3/h"]):
+                                             [ptop, ptop, ptop],
+                                             ["°C", "°C", "m³/h"]):
 
         tag = tags[text_box]
         for child in tag[0]:
@@ -357,8 +297,7 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
                 for child2 in child:
                     if 'text' in child2.tag:
                         if unit == 'degree_celsius': unit = '⁰C'
-
-                        child2.text = f'{round_to_nonzero_decimal(ptop[group][var_id])} {unit}'
+                        child2.text = f'{round_to_nonzero_decimal(ptop[var_id])} {unit}'
 
     # Cooling requirements
     icon_id = 'cooling_req'
@@ -370,7 +309,7 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
     ymin = min_size;
     ymax = max_size
     size = get_y(x, xmin, xmax, ymin, ymax)
-    value = f'{x:.0f} kWhth, {cr["Mv"]:.2f} kg/s, {cr["Tv"]:.0f} ⁰C'
+    value = f'{x:.0f} kWth, {cr["Mv"]:.2f} kg/s, {cr["Tv"]:.0f} ⁰C'
 
     tag = adjust_icon('cooling_req', size, tag, value, unit='', include_boundary=True, max_size=max_size,
                       max_value=xmax)
@@ -379,32 +318,32 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
     min_value = op_r['Ce_min']
     max_value = op_r['Ce_max']
 
-    value = ptop['costs']['Ce_wct']
+    value = ptop['Ce_wct']
     level = get_level(value, min_value, max_value)
     image_path = os.path.join(folder_path, f'electrical_consumption_x{level}.svg')
     diagram = update_image(diagram, image_path, object_id='cost_e_wct')
     tag = tags['cost_e_wct']
-    tag = adjust_icon('Ce_wct', 70, tag, value, 'kWhe', include_boundary=False, max_size=None, max_value=None)
+    tag = adjust_icon('Ce_wct', 70, tag, value, 'kWe', include_boundary=False, max_size=None, max_value=None)
 
-    value = ptop['costs']['Ce_dc']
+    value = ptop['Ce_dc']
     level = get_level(value, min_value, max_value)
     image_path = os.path.join(folder_path, f'electrical_consumption_x{level}.svg')
     diagram = update_image(diagram, image_path, object_id='cost_e_dc')
     tag = tags['cost_e_dc']
-    tag = adjust_icon('Ce_dc', 70, tag, value, 'kWhe', include_boundary=False, max_size=None, max_value=None)
+    tag = adjust_icon('Ce_dc', 70, tag, value, 'kWe', include_boundary=False, max_size=None, max_value=None)
 
     min_value = 0
     max_value = op_r['Cw_max']
-    value = ptop['costs']['Cw_wct']
+    value = ptop['Cw_wct']
     level = get_level(value, min_value, max_value)
     image_path = os.path.join(folder_path, f'water_consumption_x{level}.svg')
     diagram = update_image(diagram, image_path, object_id='cost_w_wct')
     tag = tags['cost_w_wct']
-    tag = adjust_icon('Cw_wct', 70, tag, value, 'L/h', include_boundary=False, max_size=None, max_value=None)
+    tag = adjust_icon('Cw_wct', 70, tag, value, 'l/h', include_boundary=False, max_size=None, max_value=None)
 
     # Change text for additional variables
     object_ids = ['Twct_in', 'qwct', 'qdc']
-    values = [ptop['others']['Twct_in'], ptop['others']['m_wct'], ptop['others']['m_dc']]
+    values = [ptop['Twct_in'], ptop['q_wct'], ptop['q_dc']]
     units = ['°C', 'm³/h', 'm³/h']
 
     for object_id, value, unit in zip(object_ids, values, units):
@@ -456,15 +395,15 @@ def generate_diagram(src_diagram_path, ptop, theme='light'):
     return diagram
 
 
-def generate_facility_diagram(src_diagram_path: Path, ptop: dict, save_diagram: bool = False, output_path: Path = None,
+def generate_facility_diagram(src_diagram_path: Path, case_study: dict, save_diagram: bool = False, output_path: Path = None,
                               theme:Literal['light', 'dark'] = 'light') -> etree.Element:
 
-    diagram = generate_diagram(src_diagram_path, ptop, theme=theme)
+    diagram = generate_diagram(src_diagram_path, case_study, theme=theme)
 
     if save_diagram:
-        with open(output_path + '.svg', 'w') as diagram_file:
+        with open(output_path, 'w') as diagram_file:
             diagram_file.write(etree.tostring(diagram).decode())
 
-            logger.info(f'Diagram saved in {output_path}.svg')
+            logger.info(f'Diagram saved in {output_path}')
 
     return diagram

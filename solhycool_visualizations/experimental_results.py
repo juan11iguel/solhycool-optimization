@@ -4,12 +4,13 @@
 # TODO: If a system is inactive, its control signal must go to zero, add representation of state with filled areas, ON: color of the system, OFF: gray
 # TODO: Add uncertainty bounds for timeseries signals
 # TODO: Electricity consumption
+
 import pandas as pd
 import datetime
 import plotly
 import plotly.graph_objects as go
 from loguru import logger
-from .constants import color_palette, default_fontsize
+from .constants import color_palette, default_fontsize, newshape_style
 from .calculations import calculate_uncertainty
 
 def experimental_results_plot(plt_config: dict, df: pd.DataFrame, df_opt: pd.DataFrame) -> go.Figure:
@@ -158,20 +159,24 @@ def experimental_results_plot(plt_config: dict, df: pd.DataFrame, df_opt: pd.Dat
             ),
         )
 
-        # Add decision variables updates
-        for index, row in df_opt.iterrows():
-            shapes.append(
-                dict(
-                    type="rect", xref=f"x{axes_idx}", yref=f"y{axes_idx} domain", opacity=0.2, line_width=0,
-                    # layer="below",
-                    fillcolor="#deddda",
-                    x0=index - datetime.timedelta(seconds=row["computation_time"]), x1=index,
-                    y0=-0.01, y1=1.01,
-                ),
-            )
-
         traces_right = conf.get('traces_right', [])
         overlaying_axis = f'y{idx if idx > 1 else ""}'  # Overlaying axis used to configure right axes
+
+        # Add decision variables updates
+        if plt_config.get('show_optimization_updates', True):
+            for index, row in df_opt.iterrows():
+                shapes.append(
+                    dict(
+                        type="rect", xref=f"x{axes_idx}", yref=f"y{axes_idx} domain", opacity=0.4, line_width=0,
+                        # layer="below",
+                        fillcolor="#deddda",
+                        x0=index - datetime.timedelta(seconds=row["computation_time"]), x1=index,
+                        y0=-0.01, y1=1.01,
+                    ),
+                )
+        else:
+            logger.info('Optimization updates not shown in plot, show_optimization_updates: false')
+
 
         # Active state plot
         if conf.get('show_active', False):
@@ -390,7 +395,8 @@ def experimental_results_plot(plt_config: dict, df: pd.DataFrame, df_opt: pd.Dat
         **xaxes_settings,
         **yaxes_settings,
         **legends_layout,
-        shapes=shapes
+        shapes=shapes,
+        newshape=newshape_style,
     )
     fig.update_xaxes(domain=xdomain)
 

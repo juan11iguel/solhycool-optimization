@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from typing import List, Literal
 from loguru import logger
-from .constants import color_palette, plt_colors, default_fontsize
+from .constants import color_palette, plt_colors, default_fontsize, newshape_style
 
 def save_figure(fig: go.Figure, figure_name: str, figure_path: str | Path, formats: List[Literal['eps', 'png', 'svg']],
                 width=600, height=800, scale=2) -> None:
@@ -24,105 +24,37 @@ def save_figure(fig: go.Figure, figure_name: str, figure_path: str | Path, forma
         logger.info(f'Figure saved in {figure_path}/{figure_name}.{fmt}')
 
 
-def costs_plot(df: pd.DataFrame) -> go.Figure:
-    # Costs plot
+def generate_tooltip_data(pr: pd.DataFrame):
 
-    fig = go.Figure()
+    custom_data = np.stack((
+        # Decision variables
+        pr['q_c'].values,
+        pr['q_dc'].values,
+        pr['q_vm'].values,
+        pr['Tdc_out'].values,
+        pr['Twct_out'].values,
 
-    # DC
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc"],
-        name='DC',
-        hoverinfo='x+y',
-        mode='lines',
-        line=dict(width=1.5, color=color_palette['dc_green']),
-        stackgroup='Ce'  # define stack group
-    ))
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc_opt"] + df["Ce_wct_opt"] + df["Ce_c_opt"],
-        name='Condenser (model)',
-        mode='lines',
-        line=dict(width=1, color=color_palette['c_blue'], dash='dashdot'),
-    ))
+    ), axis=-1)
 
-    # WCT
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_wct"],
-        name='WCT',
-        hoverinfo='x+y',
-        mode='lines',
-        line=dict(width=1.5, color=color_palette['wct_purple']),
-        stackgroup='Ce'
-    ))
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc_opt"] + df["Ce_wct_opt"],
-        name='WCT (model)',
-        mode='lines',
-        line=dict(width=1.5, color=color_palette['wct_purple'], dash='dashdot'),
-    ))
+    # Build hover text
+    # hover_text = f"""
+    # <b>Decision variables</b><br>
+    # - {cv['R1']['label']}: %{{customdata[0]:.2f}} {cv['R1']['unit']}<br>
+    # - {cv['R2']['label']}: %{{customdata[1]:.2f}} {cv['R2']['unit']}<br>
+    # - {cv['qc']['label']}: %{{customdata[2]:.1f}} {cv['qc']['unit']}<br>
+    # - {cv['Tdc_out']['label']}: %{{customdata[3]:.1f}} {cv['Tdc_out']['unit']}<br>
+    # - {cv['Twct_out']['label']}: %{{customdata[4]:.1f}} {cv['Twct_out']['unit']}<br>
+    # """
 
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_c"],
-        name='Condenser',
-        hoverinfo='x+y',
-        mode='lines',
-        line=dict(width=1, color=color_palette['c_blue']),
-        stackgroup='Ce'
-    ))
-    # Add Ce_dc_opt with a dash dot line, same color as Ce_dc but thinner
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc_opt"],
-        name='DC (model)',
-        mode='lines',
-        line=dict(width=1.5, color=color_palette['dc_green'], dash='dashdot'),
-    ))
+    # TODO: do not hardcode label and units
+    hover_text = f"""
+<b>Decision variables</b><br>
+    - q<sub>c</sub>: %{{customdata[0]:.2f}} m³/h<br>
+    - q<sub>dc</sub>: %{{customdata[1]:.2f}} m³/h<br>
+    - q<sub>vm</sub>: %{{customdata[2]:.1f}} m³/h<br>
+    - T<sub>dc,out</sub>: %{{customdata[3]:.1f}} ºC<br>
+    - T<sub>wct,out</sub>: %{{customdata[4]:.1f}} ºC<br>
+C<sub>e</sub>: %{{y:.2f}} kW<sub>e</sub>, C<sub>w</sub>: %{{x:.2f}} l/h<extra></extra>
+"""
 
-    # Add total consumption thick line
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce"],
-        name='Ce',
-        mode='lines',
-        line=dict(width=5, color=color_palette['yellow']),
-    ))
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_opt"],
-        name='Ce (model)',
-        mode='lines',
-        line=dict(width=2, color=color_palette['yellow'], dash='dashdot'),
-    ))
-
-    # Add the water consumption to the right axis
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Cw"],
-        name='Cw',
-        mode='lines',
-        line=dict(width=5, color=color_palette['wct_purple']),
-        yaxis='y2'
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Cw_opt"],
-        name='Cw (model)',
-        mode='lines',
-        line=dict(width=2, color=color_palette['wct_purple'], dash='dashdot'),
-        yaxis='y2'
-    ))
-
-    fig.update_layout(
-        # Configure axis
-        xaxis=dict(title='Time'),
-        yaxis=dict(title='Electricity consumption (kW<sub>e</sub>)'),
-        yaxis2=dict(title='Water consumption (l/h)', showgrid=False, zeroline=False, overlaying='y', side='right'),
-
-        # Configure legend
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor='rgba(0,0,0,0)'
-        ),
-    )
-
-    return fig
+    return custom_data, hover_text

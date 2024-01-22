@@ -1,5 +1,7 @@
 import copy
 import plotly.express as px
+import plotly.graph_objects as go
+from typing import Literal
 
 # Colors definition
 color_palette = {
@@ -21,3 +23,35 @@ color_palette = {
 
 default_fontsize = 16
 plt_colors = px.colors.qualitative.Plotly * 3 # * 3 to have plenty of colors
+
+# style of user-drawn shapes
+newshape_style: dict = dict(
+    line_color=color_palette['plotly_green'],
+    fillcolor=color_palette['plotly_green'],
+    opacity=0.5,
+    layer="below"
+)
+
+
+def generate_plotly_config(fig: go.Figure, figure_name: str = 'solhycool_plot',
+                           file_format: Literal['png', 'svg', 'jpeg', 'webp'] = 'png',
+                           height: int = None, width: int = None, scale: int = 2) -> dict:
+    # configuration options for the plotly figure
+    return dict(
+        toImageButtonOptions={
+            'format': file_format,  # one of png, svg, jpeg, webp
+            'filename': figure_name,
+            'height': height if height else fig.layout.height,
+            'width': width if width else fig.layout.width,
+            'scale': scale  # Multiply title/legend/axis/canvas sizes by this factor
+        },
+
+        modeBarButtonsToAdd=[
+            'drawline',
+            'drawopenpath',
+            'drawclosedpath',
+            'drawcircle',
+            'drawrect',
+            'eraseshape'
+        ]
+    )
