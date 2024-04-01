@@ -1,0 +1,72 @@
+{
+    "decision_variables": {
+        "R1": 0.3,
+        "R2": 0.6,
+        "qc": 12,
+        "Tdc_out": 30.7,
+        "Twct_out": 36.7
+    },
+
+    "environment": {
+        "Tamb": 10,
+        "HR": 40
+    },
+
+    "costs": {
+        "Ce_dc": 0.73,
+        "Ce_wct": 0.11,
+        "Ce_pump": 0.5,
+        "Cw_wct": 99.83
+    },
+
+    "others":{
+        "Tcin": 20,
+        "Tcout": 44
+    },
+
+    "control_variables": {
+        "w_fan_dc": 80,
+        "w_fan_wct": 30
+    },
+
+    "cooling_requirements": {
+        "Tv": 45,
+        "mv": 0.17,
+        "Pth": 200,
+        "CT": 0.6
+    },
+
+    "operating_range": {
+        "qc_min": 12,
+        "qc_max": 24,
+        
+        "R1_min": 0,
+        "R1_max": 1,
+        "R2_min": 0,
+        "R2_max": 1,
+        
+        "w_fan_dc_min": 0,
+        "w_fan_dc_max": 100,
+        "w_fan_wct_min": 0,
+        "w_fan_wct_max": 100,
+        
+        "Pth_min": 100,
+        "Pth_max": 200,
+
+        "Ce_min": 0.9488,
+        "Ce_max": 14.0042,
+        "Cw_min": 0,
+        "Cw_max": 416.8169,
+
+        "Tamb_min": 0,
+        "Tamb_max": 45,
+
+        "HR_min": 0,
+        "HR_max": 100,
+
+        "Tdc_out_min": 15,
+        "Tdc_out_max": 40,
+        "Twct_out_min": 10,
+        "Twct_out_max": 40
+    }
+}
