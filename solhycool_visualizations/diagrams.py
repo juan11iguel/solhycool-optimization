@@ -15,7 +15,8 @@ from phd_visualizations.diagrams import (
     get_y,
     change_color_text,
     update_image,
-    nsmap
+    nsmap,
+    get_level
 )
 
 

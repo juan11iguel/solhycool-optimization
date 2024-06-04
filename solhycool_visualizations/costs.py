@@ -121,50 +121,50 @@ def costs_evolution_plot(df: pd.DataFrame) -> go.Figure:
     # DC
     fig.add_trace(go.Scatter(
         x=df.index, y=df["Ce_dc"],
-        name='DC',
+        name='Ce,dc',
         hoverinfo='x+y',
         mode='lines',
         line=dict(width=1.5, color=color_palette['dc_green']),
         stackgroup='Ce'  # define stack group
     ))
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc_opt"] + df["Ce_wct_opt"] + df["Ce_c_opt"],
-        name='Condenser (model)',
-        mode='lines',
-        line=dict(width=1, color=color_palette['c_blue'], dash='dashdot'),
-    ))
+    # fig.add_trace(go.Scatter(
+    #     x=df.index, y=df["Ce_dc_opt"] + df["Ce_wct_opt"] + df["Ce_c_opt"],
+    #     name='Condenser (model)',
+    #     mode='lines',
+    #     line=dict(width=1, color=color_palette['c_blue'], dash='dashdot'),
+    # ))
 
     # WCT
     fig.add_trace(go.Scatter(
         x=df.index, y=df["Ce_wct"],
-        name='WCT',
+        name='Ce,wct',
         hoverinfo='x+y',
         mode='lines',
         line=dict(width=1.5, color=color_palette['wct_purple']),
         stackgroup='Ce'
     ))
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc_opt"] + df["Ce_wct_opt"],
-        name='WCT (model)',
-        mode='lines',
-        line=dict(width=1.5, color=color_palette['wct_purple'], dash='dashdot'),
-    ))
+    # fig.add_trace(go.Scatter(
+    #     x=df.index, y=df["Ce_dc_opt"] + df["Ce_wct_opt"],
+    #     name='WCT (model)',
+    #     mode='lines',
+    #     line=dict(width=1.5, color=color_palette['wct_purple'], dash='dashdot'),
+    # ))
 
     fig.add_trace(go.Scatter(
         x=df.index, y=df["Ce_c"],
-        name='Condenser',
+        name='Ce,c',
         hoverinfo='x+y',
         mode='lines',
         line=dict(width=1, color=color_palette['c_blue']),
         stackgroup='Ce'
     ))
     # Add Ce_dc_opt with a dash dot line, same color as Ce_dc but thinner
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Ce_dc_opt"],
-        name='DC (model)',
-        mode='lines',
-        line=dict(width=1.5, color=color_palette['dc_green'], dash='dashdot'),
-    ))
+    # fig.add_trace(go.Scatter(
+    #     x=df.index, y=df["Ce_dc_opt"],
+    #     name='DC (model)',
+    #     mode='lines',
+    #     line=dict(width=1.5, color=color_palette['dc_green'], dash='dashdot'),
+    # ))
 
     # Add total consumption thick line
     fig.add_trace(go.Scatter(

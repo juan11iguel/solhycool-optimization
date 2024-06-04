@@ -1,4 +1,4 @@
--e git+ssh://git@github.com/juan11iguel/phd_visualizations.git#egg=phd_visualizations
+pip-e git+ssh://git@github.com/juan11iguel/phd_visualizations.git#egg=phd_visualizations
 aiofiles==22.1.0
 aiosqlite==0.19.0
 ansi2html==1.8.0
